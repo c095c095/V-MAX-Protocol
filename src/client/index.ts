@@ -40,6 +40,20 @@ function log(direction: '<-' | '->', msg: ParsedMessage) {
   console.log(`${direction} ${formatForLog(msg)}`);
 }
 
+// Every Nth push, also self-check via STATUS — piggybacked on the existing push cadence rather
+// than a separate timer/CLI flag. On a fresh connection this can only ever come back `200`
+// (registration is 1:1 with the live socket that just sent it), so the useful case is later:
+// if the server ever stops recognizing this registration without the TCP connection itself
+// dropping, the next check surfaces it as `401` — see handleResponse below.
+const STATUS_CHECK_EVERY_N_PUSHES = 3;
+let pushCount = 0;
+
+function sendStatusCheck() {
+  const req = encodeRequest('STATUS', { 'Node-ID': nodeId! });
+  connection.send(req);
+  log('->', new MessageParser().push(req)[0]);
+}
+
 function pushReading() {
   const reading = generateReading(nodeType, state);
   const req = encodeRequest('PUSH', { 'Node-ID': nodeId!, Seq: String(connection.nextSeq()) }, reading);
@@ -52,10 +66,16 @@ function pushReading() {
       console.log(`  ! ${state.threshold.field}=${v} is below threshold ${state.threshold.min}, will push again next tick`);
     }
   }
+
+  pushCount += 1;
+  if (pushCount % STATUS_CHECK_EVERY_N_PUSHES === 0) {
+    sendStatusCheck();
+  }
 }
 
 function startPushing() {
   console.log(`Registered. Pushing every ${state.intervalSeconds}s.`);
+  pushCount = 0;
   pushReading();
   state.pushTimer = setInterval(pushReading, state.intervalSeconds * 1000);
 }
@@ -68,6 +88,10 @@ function handleResponse(msg: Extract<ParsedMessage, { kind: 'response' }>) {
     console.error(`Registration failed, exiting.`);
     connection.markIntentionalDisconnect();
     process.exit(1);
+  } else if (msg.statusCode === 401) {
+    // Only a periodic STATUS check (above) can produce a 401 here — PUSH/REGISTER responses
+    // are handled by the branches above, and this handler only runs once already registered.
+    console.log('  ! periodic STATUS check: server no longer recognizes this registration (401) — possible server restart or state loss');
   }
 }
 

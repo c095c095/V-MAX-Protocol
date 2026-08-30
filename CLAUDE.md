@@ -44,6 +44,9 @@ Don't re-derive protocol rationale; it's already recorded:
   every node in a plot. Implemented in `server/repl.ts`.
 - `docs/adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison table and the "จุดเด่น"
   (strengths) summary built from ADRs 0006–0010.
+- `docs/adr/0012-client-periodic-status-heartbeat.md` — why `client.ts` sends `STATUS` every 3rd `PUSH`
+  instead of never sending it at all (the previous state — `STATUS` was fully server-supported but no
+  reference client ever used it). Implemented in `client/index.ts`.
 
 If a protocol detail changes, update `docs/CONTEXT.md`/the relevant ADR in the same change — don't let docs drift
 from code.
@@ -142,13 +145,15 @@ alongside `buildCommandPayload`.
 
 **The "Demo tips / coverage notes" `<details>` block** (`dashboard/public/index.html`, right under the
 header) is load-bearing disclosure, not clutter — a `/scrutinize` pass found the dashboard silently implies
-full protocol coverage when three things have no path through it at all: `Seq` gap detection (ADR 0006) and
-version validation (ADR 0009) need hand-crafted wire bytes no spawned client ever sends, and the `STATUS`
-method is never sent by `client.ts` in any form (CLI or dashboard) — a pre-existing client limitation, not
-something the dashboard introduced. Auto-reconnect (ADR 0007) *is* demoable, but only if you already know the
-non-obvious sequence (kill a server, not the client, then create a new one on the same port). Don't remove
-this block without keeping that disclosure somewhere — the dashboard does not cover 100% of the protocol and
-should never silently imply it does.
+full protocol coverage when it doesn't. `Seq` gap detection (ADR 0006) and version validation (ADR 0009)
+still have no path through it at all — both need hand-crafted wire bytes no spawned client ever sends, only
+reachable via `tests/integration.test.ts`. Auto-reconnect (ADR 0007) *is* demoable, but only if you already
+know the non-obvious sequence (kill a server, not the client, then create a new one on the same port). The
+`STATUS` method entry used to say the same "not demoable" thing — that was true when the note was written,
+but ADR 0012 (added right after, same follow-up question) gave `client.ts` a periodic `STATUS` self-check
+every 3rd `PUSH`, so it's demoable now; the note was updated to say so instead of removed, so it doesn't go
+stale silently again. Don't remove this block without keeping that disclosure somewhere — the dashboard does
+not cover 100% of the protocol and should never silently imply it does.
 
 Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
 assignment's three deliverables — useful for the demo video, nothing more.
@@ -189,7 +194,10 @@ Any change to framing or message shape belongs in `protocol/`, not duplicated in
 
 **`src/client/`** — simulates one sensor node, entry point `index.ts`.
 - `index.ts` — parses CLI flags, owns the mutable `ClientState` object, and wires `connection.ts`'s callbacks
-  to `commands.ts`/`sensors.ts`. Only starts its push loop (`startPushing`) after receiving `201`.
+  to `commands.ts`/`sensors.ts`. Only starts its push loop (`startPushing`) after receiving `201`. Every 3rd
+  `PUSH`, also sends a `STATUS` self-check on the same connection (ADR 0012) — a `401` there (only reachable
+  from that check, since this handler only runs once already registered) is logged, not auto-recovered from;
+  ADR 0007's reconnect logic is the layer that handles an actual dropped connection.
 - `connection.ts` — owns the socket lifecycle: builds/sends REGISTER on every (re)connect, resets the `Seq`
   counter per connection (ADR 0006), and auto-reconnects with exponential backoff on an unintentional close
   (ADR 0007) via `onDisconnect`/`onClose` callbacks so the caller can stop/resume things like the push timer.

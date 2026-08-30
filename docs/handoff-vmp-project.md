@@ -19,6 +19,7 @@ The previous session used `/grill-with-docs` (grilling + domain-modeling skills)
 - `adr/0005-nodejs-typescript-runtime.md` — why Node.js+TypeScript over Bun (environment reliability for grading/demo, despite Bun matching the user's usual stack).
 - `adr/0006-sequence-numbers-for-gap-detection.md` through `adr/0010-broadcast-command-to-plot.md` — 5 new protocol features (Seq gap detection, client auto-reconnect, Auth-Token auth, version validation, Plot-ID broadcast COMMAND), added via a follow-up `/grill-with-docs` session to give VMP genuine differentiators for the Networking course comparison writeup. **Implemented and tested** — see "Implementation state" below.
 - `adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison (8-axis table + balanced trade-off discussion), with a closing "จุดเด่นของ VMP" summary built from ADRs 0006–0010, plus a "future work" section for four further ideas that were deliberately deferred (full session resumption, Message-ID dedupe, batch PUSH, TLS).
+- `adr/0012-client-periodic-status-heartbeat.md` — why `client.ts` now sends `STATUS` every 3rd `PUSH` (found via a dashboard-coverage `/scrutinize`: `STATUS` was fully server-supported but no reference client ever sent one, at all, ever). Implemented and tested.
 
 ## Implementation state
 
@@ -43,14 +44,15 @@ long — see `CLAUDE.md`'s Architecture section for the full per-file breakdown.
 
 **`npm test` now runs an automated suite** (`tests/protocol.test.ts` + `tests/integration.test.ts`, Node's
 built-in test runner via `tsx --test`, zero new dependencies — see `CLAUDE.md`'s Tests section for how it's
-structured). 26 tests, all passing:
+structured). 27 tests, all passing:
 - Unit: request/response encode-decode round-tripping, `MessageParser` chunking (partial chunks, multiple
   messages in one TCP chunk), `formatForLog`.
 - Integration (spawns the real server, drives it over real TCP sockets): REGISTER happy path→201→PUSH→200,
   duplicate REGISTER→409, Node-ID/Node-Type mismatch→400, PUSH before REGISTER→401, STATUS on an unregistered
-  node→401, ungraceful disconnect + re-registration, version mismatch→400, `Seq` gap detection+log, `Auth-Token`
-  (no/wrong/correct token, and an unsecured server ignoring it), operator REPL `command <Node-ID>` and
-  `command <Plot-ID>` broadcast, and an unknown REPL target logging cleanly instead of crashing.
+  node→401, STATUS on an already-registered node→200 (`registered:true`), ungraceful disconnect +
+  re-registration, version mismatch→400, `Seq` gap detection+log, `Auth-Token` (no/wrong/correct token, and an
+  unsecured server ignoring it), operator REPL `command <Node-ID>` and `command <Plot-ID>` broadcast, and an
+  unknown REPL target logging cleanly instead of crashing.
 
 Also manually verified once during implementation (see git history around ADRs 0006–0010's commits) — worth
 noting because a real bug was **found and fixed** during that manual pass, before the automated suite existed:
@@ -118,6 +120,13 @@ fix without touching `src/`. Auto-reconnect (ADR 0007) *is* demoable, but the se
 client, then create a new one on the same port) wasn't explained anywhere — now it is, in that same block. If
 asked again "does it cover everything now," the honest answer is still no — only more honest about it.
 
+The `STATUS` line above became a real fix a message later: asked "so is that a protocol mistake," which it
+mostly wasn't (version validation and `Seq` gap detection are both structurally untestable without hand-
+crafted bad input — normal for any validation/anomaly-detection code, not a flaw) — except `STATUS`, which
+genuinely was a gap: fully server-supported, never client-sent. See ADR 0012 and "Where design decisions
+live" above — `client.ts` now sends it every 3rd `PUSH`, so this dashboard note (and the matching one in
+`CLAUDE.md`) got corrected rather than left stale.
+
 ## Remaining work, in order of the assignment's 3 requirements
 
 1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly
@@ -126,7 +135,7 @@ asked again "does it cover everything now," the honest answer is still no — on
    section at the end (per the user's decision) — it's written to be reused directly, and now describes
    features that actually exist in the shipped code.
 2. **Source code** — all 5 new features (ADRs 0006–0010) implemented; `npm test` covers the core protocol
-   behavior automatically now (26 tests, see above). The remaining manual-only scenarios (3+ concurrent nodes,
+   behavior automatically now (27 tests, see above). The remaining manual-only scenarios (3+ concurrent nodes,
    the rest of the COMMAND subtypes via REPL, a literal server restart) still need a pass before the video demo.
 3. **Video (≤15 min)** — not started. Plan was 5 demo cases: (1) happy path (2) multi-client concurrent
    (3) errors: 409/401/400 (4) ungraceful disconnect (5) STATUS→401 post-restart. Consider adding the new
@@ -146,4 +155,4 @@ asked again "does it cover everything now," the honest answer is still no — on
 
 ## Files
 
-`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `dashboard/server.ts` + `dashboard/public/{index.html,style.css,app.js}` (demo tool, not graded), `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.
+`docs/CONTEXT.md`, `docs/adr/0001..0012`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `dashboard/server.ts` + `dashboard/public/{index.html,style.css,app.js}` (demo tool, not graded), `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.

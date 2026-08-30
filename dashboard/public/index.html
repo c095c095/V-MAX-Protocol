@@ -24,9 +24,10 @@
         hand-crafted wire bytes that no client spawned here ever sends. See
         <code>tests/integration.test.ts</code> or <code>docs/adr/0006</code>/<code>0009</code>
         to see them exercised.</li>
-      <li><strong>STATUS method:</strong> not a dashboard limitation — <code>client.ts</code>
-        never sends a <code>STATUS</code> request in any form, CLI or dashboard-spawned, so
-        <code>200</code>/<code>401</code> on that method can't be demoed by any client here.</li>
+      <li><strong>STATUS method:</strong> every client now self-checks via <code>STATUS</code>
+        every 3rd <code>PUSH</code> (ADR 0012) — watch any client's log for a few pushes to see
+        it appear, answered <code>200</code>/<code>registered:true</code> under normal
+        operation.</li>
     </ul>
   </details>
 

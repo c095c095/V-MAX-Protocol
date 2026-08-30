@@ -178,6 +178,18 @@ describe('VMP integration (real server + real TCP sockets)', () => {
     client.close();
   });
 
+  test('STATUS for an already-registered node -> 200 with registered:true', async () => {
+    const client = await TestClient.connect(PORT);
+    client.send(encodeRequest('REGISTER', { 'Node-ID': 'TEMP-STATUS-01', 'Node-Type': 'TempHumidNode', 'Plot-ID': 'PLOT-STATUS' }));
+    assertStatus(await client.next(), 201);
+
+    client.send(encodeRequest('STATUS', { 'Node-ID': 'TEMP-STATUS-01' }));
+    const res = await client.next();
+    assertStatus(res, 200);
+    if (res.kind === 'response') assert.deepEqual(res.body, { registered: true });
+    client.close();
+  });
+
   test('ungraceful disconnect: server cleans up so the Node-ID can register again', async () => {
     const first = await TestClient.connect(PORT);
     first.send(encodeRequest('REGISTER', { 'Node-ID': 'LIGHT-92', 'Node-Type': 'LightNode', 'Plot-ID': 'PLOT-92' }));

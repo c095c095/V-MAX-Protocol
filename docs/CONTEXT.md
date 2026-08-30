@@ -25,7 +25,7 @@ Method ที่ node ส่งค่าที่วัดได้เข้า 
 Method ที่ server ส่งสั่งงาน node ผ่าน connection เดิมที่ REGISTER ไว้ มี 5 คำสั่งย่อย: SET_INTERVAL (เปลี่ยนความถี่ส่งข้อมูล), REPORT_NOW (สั่งส่งค่าล่าสุดทันที), SET_THRESHOLD (ตั้งขีดจำกัดเตือนภัย เช่น ดินแห้งเกินไปให้ส่ง PUSH ทันที), CALIBRATE (ปรับ offset เซนเซอร์), SHUTDOWN (สั่งตัดการเชื่อมต่อจากระยะไกล)
 
 **STATUS**:
-Method ที่ node ส่งเช็คว่ายังลงทะเบียนอยู่กับ server หรือไม่ — body ว่าง มีแค่ header Node-ID ตอบกลับ `200 OK` พร้อม `{"registered": true}` หรือ `401 Unregistered` ถ้า server restart แล้ว state หาย
+Method ที่ node ส่งเช็คว่ายังลงทะเบียนอยู่กับ server หรือไม่ — body ว่าง มีแค่ header Node-ID ตอบกลับ `200 OK` พร้อม `{"registered": true}` หรือ `401 Unregistered` ถ้า server restart แล้ว state หาย client ส่ง STATUS นี้เองอัตโนมัติทุกๆ 3 ครั้งของ PUSH เป็น self-check เบาๆ (`docs/adr/0012`)
 _Avoid_: PING, HEARTBEAT
 
 **UNREGISTER**:
