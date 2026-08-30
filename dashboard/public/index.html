@@ -9,8 +9,23 @@
 <body>
   <header>
     <h1>VMP Dashboard</h1>
-    <p class="subtitle">Demo aid for V MAX Protocol — spawns the real server/client processes. Not a graded deliverable.</p>
+    <p class="subtitle">Demo aid for V MAX Protocol - spawns the real server/client processes. Not a graded deliverable.</p>
   </header>
+
+  <details class="tips" open>
+    <summary>Demo tips / coverage notes</summary>
+    <ul>
+      <li><strong>Auto-reconnect (ADR 0007):</strong> kill a server while a client targeting it
+        is still running, then create a new server on the same port — the client's log will show
+        reconnect attempts with growing backoff (1s &rarr; 2s &rarr; 4s &rarr; ...) until it
+        re-registers.</li>
+      <li><strong>Not demoable from this dashboard:</strong> protocol version validation
+        (ADR 0009) and <code>Seq</code> gap/duplicate detection (ADR 0006) both require
+        hand-crafted wire bytes that no client spawned here ever sends. See
+        <code>tests/integration.test.ts</code> or <code>docs/adr/0006</code>/<code>0009</code>
+        to see them exercised.</li>
+    </ul>
+  </details>
 
   <main class="columns">
     <section class="column" id="servers-column">

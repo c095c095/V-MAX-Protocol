@@ -38,6 +38,40 @@ header h1 {
   font-size: 13px;
 }
 
+.tips {
+  margin: 12px 24px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.tips summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.tips ul {
+  margin: 8px 0 2px;
+  padding-left: 18px;
+}
+
+.tips li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.tips code {
+  background: var(--panel-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: "SF Mono", Consolas, monospace;
+}
+
 .columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -217,7 +251,10 @@ header h1 {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px;
-  height: 180px;
+  height: 180px; /* initial height only — resize handle below lets it grow/shrink per-card */
+  min-height: 100px;
+  max-height: 60vh;
+  resize: vertical;
   overflow-y: auto;
   font-family: "SF Mono", Consolas, monospace;
   font-size: 11px;

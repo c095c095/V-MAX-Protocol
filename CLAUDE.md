@@ -140,6 +140,13 @@ card creation and on every `change` of the subtype `<select>`) so the browser's 
 incomplete submit before it ever reaches the REPL. If you add a 6th COMMAND subtype, update `SUBTYPE_ARGS`
 alongside `buildCommandPayload`.
 
+**The "Demo tips / coverage notes" `<details>` block** (`dashboard/public/index.html`, right under the
+header) is load-bearing disclosure, not clutter — a `/scrutinize` pass found the dashboard silently implies
+full protocol coverage when `Seq` gap detection (ADR 0006) and version validation (ADR 0009) have no path
+through it at all (both need hand-crafted wire bytes no spawned client ever sends), and that auto-reconnect
+(ADR 0007) is demoable but only if you already know the non-obvious sequence (kill a server, not the client,
+then create a new one on the same port). Don't remove this block without keeping that disclosure somewhere.
+
 Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
 assignment's three deliverables — useful for the demo video, nothing more.
 
