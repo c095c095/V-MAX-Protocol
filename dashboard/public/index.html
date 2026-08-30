@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VMP Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>VMP Dashboard</h1>
+    <p class="subtitle">Demo aid for V MAX Protocol — spawns the real server/client processes. Not a graded deliverable.</p>
+  </header>
+
+  <main class="columns">
+    <section class="column" id="servers-column">
+      <h2>Servers</h2>
+
+      <form id="server-create-form" class="create-form">
+        <label>
+          Port
+          <input type="number" id="server-port" required />
+        </label>
+        <label>
+          Secret <span class="hint">(optional — enables Auth-Token)</span>
+          <input type="text" id="server-secret" placeholder="leave blank to disable auth" />
+        </label>
+        <button type="submit">Create Server</button>
+      </form>
+
+      <div id="server-list" class="card-list"></div>
+    </section>
+
+    <section class="column" id="clients-column">
+      <h2>Clients</h2>
+
+      <form id="client-create-form" class="create-form">
+        <label>
+          Node Type
+          <select id="client-type">
+            <option value="TempHumidNode">TempHumidNode (prefix TEMP-)</option>
+            <option value="SoilNode">SoilNode (prefix SOIL-)</option>
+            <option value="LightNode">LightNode (prefix LIGHT-)</option>
+          </select>
+        </label>
+        <label>
+          Node-ID <span class="hint">(e.g. TEMP-01 — free text, mismatches will 400)</span>
+          <input type="text" id="client-id" placeholder="TEMP-01" required />
+        </label>
+        <label>
+          Plot-ID
+          <input type="text" id="client-plot" placeholder="PLOT-01" required />
+        </label>
+        <label>
+          Target server
+          <select id="client-target-server">
+            <option value="">— manual host/port below —</option>
+          </select>
+        </label>
+        <label>
+          Host
+          <input type="text" id="client-host" value="127.0.0.1" required />
+        </label>
+        <label>
+          Port
+          <input type="number" id="client-port" required />
+        </label>
+        <label>
+          Interval (s)
+          <input type="number" id="client-interval" value="5" min="1" required />
+        </label>
+        <label>
+          Token <span class="hint">(only if target server has a secret)</span>
+          <input type="text" id="client-token" placeholder="leave blank if unsecured" />
+        </label>
+        <button type="submit">Create Client</button>
+      </form>
+
+      <div id="client-list" class="card-list"></div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

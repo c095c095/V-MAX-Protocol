@@ -72,6 +72,23 @@ To rerun manually: start the server (`npx tsx src/server/index.ts <port>`), then
 client (`npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PLOT-01 --port <port> --interval
 2`). Both print every message with full status code/phrase per the assignment requirement.
 
+## Dashboard (demo tool, not a deliverable)
+
+Built this session per the user's request for something to "เห็นภาพการทำงาน" (visualize the protocol working)
+for the video: `dashboard/` is an Express + Socket.IO web app (`npm run dashboard`,
+`http://127.0.0.1:3000`) that spawns real `src/server/index.ts` / `src/client/index.ts` processes — create
+multiple VMP servers on different ports, create simulated client nodes targeting any of them, send COMMANDs to
+a Node-ID or Plot-ID from a form, watch every process's log live with status/method color-coding. It never
+imports or modifies protocol code — see `CLAUDE.md`'s Dashboard section for how it's wired (log-parsing
+regexes over the existing `formatForLog` output, direct-child-process spawning so kill actually works).
+
+Verified headlessly this session with a throwaway `socket.io-client` script (same idea as
+`tests/integration.test.ts`, just driving the dashboard's own Socket.IO events instead of the VMP wire
+protocol directly): server create → client create → REGISTER 201 → COMMAND delivery → ungraceful kill → server
+cleanup, and the secured-server Auth-Token path (missing token → 403 → correct token → 201), all passed. **Not
+yet checked in an actual browser** — the JS/CSS logic is verified, but real layout/coloring rendering needs a
+manual look before relying on it for the video.
+
 ## Remaining work, in order of the assignment's 3 requirements
 
 1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly
@@ -88,6 +105,9 @@ client (`npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PL
    broadcast COMMAND — all confirmed working live during this session. The assignment explicitly asks for
    "การทดสอบการรันโปรแกรมที่เขียนในรูปแบบต่างๆ" (testing the program in various forms) — running `npm test` on
    camera and briefly narrating what it covers is a fast, credible way to satisfy that alongside the live demos.
+   The `dashboard/` tool (see above) is a strong option for the demo/error-case portion specifically — it can
+   drive the same happy-path/error/auth/reconnect/broadcast scenarios visually instead of juggling terminal
+   windows, though it still needs a manual browser check first (see Dashboard section).
 
 ## Suggested skills for next session
 
@@ -97,4 +117,4 @@ client (`npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PL
 
 ## Files
 
-`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.
+`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `dashboard/server.ts` + `dashboard/public/{index.html,style.css,app.js}` (demo tool, not graded), `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.

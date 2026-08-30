@@ -13,6 +13,11 @@ Three simulated sensor node types (`TempHumidNode`, `SoilNode`, `LightNode`) con
 push readings periodically, and can receive commands back from the server over the same connection (hybrid
 push/command model).
 
+`dashboard/` is a separate interactive web demo tool (Express + Socket.IO) that spawns real
+`src/server/index.ts`/`src/client/index.ts` processes and shows their logs live — it's a demo aid for the
+video, **not one of the three graded deliverables**, and never modifies protocol code. See its own section
+below.
+
 ## Where design decisions live — read these before changing protocol behavior
 
 Don't re-derive protocol rationale; it's already recorded:
@@ -77,6 +82,25 @@ dependencies — reuses the `tsx` devDependency already needed to run the app). 
 
 Note: `tsconfig.json` intentionally omits `moduleResolution` — TypeScript 7 changed its behavior, and setting
 it to `"node"` breaks the build. Don't add it back without checking.
+
+## Dashboard (demo tool, not a deliverable)
+
+`npm run dashboard` starts a small Express + Socket.IO app (`dashboard/server.ts`, static frontend in
+`dashboard/public/`) on `http://127.0.0.1:3000` (binds to localhost only — it can spawn arbitrary child
+processes). It lets you create/kill multiple VMP server instances (each its own port, optional `--secret`),
+create/stop/kill simulated client nodes targeting any of them, send COMMANDs to a Node-ID or Plot-ID from a
+form (mirrors `server/repl.ts`), and watch every process's log live, parsed and color-coded by status/method.
+
+It's built entirely by **spawning the real, unmodified `src/server/index.ts` / `src/client/index.ts`** the
+same way `tests/integration.test.ts` does (`spawn(process.execPath, ['--import', 'tsx', ...])` — a direct
+child of node, not through `npx`, so `.kill()` actually works) and **re-parsing their existing stdout** with
+regexes over `formatForLog`'s output — it never imports or modifies protocol code. If you change what
+`server/handlers.ts` or `server/repl.ts` print, check `dashboard/server.ts`'s `REGISTERED_LIST_RE` /
+`REGISTER_HEADERS_RE` / `REMOVED_NODE_RE` still match; if you change the log format, dashboard breakage is a
+signal, not code to keep in sync proactively.
+
+Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
+assignment's three deliverables — useful for the demo video, nothing more.
 
 ## Architecture
 

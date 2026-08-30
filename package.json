@@ -8,13 +8,18 @@
   },
   "scripts": {
     "pretest": "tsc --noEmit",
-    "test": "tsx --test"
+    "test": "tsx --test",
+    "dashboard": "tsx dashboard/server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^26.1.2",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tsx": "^4.23.9",
     "typescript": "^7.0.2"
   }
