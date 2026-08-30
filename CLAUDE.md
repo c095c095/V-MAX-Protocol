@@ -47,7 +47,8 @@ from code.
 
 ```
 npm install                              # install deps
-npx tsc --noEmit                         # type-check (no test suite exists; this is the correctness gate)
+npm test                                  # type-check (pretest) + run the automated test suite
+npx tsc --noEmit                         # type-check only (this is npm test's pretest step)
 npx tsx src/server/index.ts <port> [--secret <token>]         # run the server (default port 4000)
 npx tsx src/client/index.ts --type <TempHumidNode|SoilNode|LightNode> --id <Node-ID> --plot <Plot-ID> \
     [--host localhost] [--port 4000] [--interval 5] [--token <token>]   # run a simulated node
@@ -56,9 +57,23 @@ npx tsx src/client/index.ts --type <TempHumidNode|SoilNode|LightNode> --id <Node
 `--secret`/`--token` are optional (ADR 0008) — omit both and REGISTER requires no `Auth-Token`, unchanged from
 the original demo flow.
 
-`package.json`'s `test` script is a placeholder — testing so far has been manual (start server, connect one or
-more clients, observe logged messages/status codes). There is no automated test suite to run or extend unless
-you add one.
+## Tests
+
+`npm test` runs `tsc --noEmit` (via `pretest`) then Node's built-in test runner (`tsx --test`, zero extra
+dependencies — reuses the `tsx` devDependency already needed to run the app). Node auto-discovers every
+`*.test.ts` file under `tests/`, so a new file there is picked up automatically; no config to touch.
+
+- `tests/protocol.test.ts` — unit tests for `src/protocol/*` (encode/decode round-tripping, `MessageParser`
+  chunking edge cases: partial chunks, multiple messages in one chunk). Pure functions, no sockets, fast.
+- `tests/integration.test.ts` — spawns the real server (`node --import tsx src/server/index.ts <port>`, a
+  direct child process so `.kill()` in `after()` actually terminates it — don't spawn through `npx`, which
+  wraps in a shell that swallows the kill signal) and drives it over real TCP sockets via a small `TestClient`
+  helper (connect, send a `Buffer`, `await next()` for the next parsed message). This is how REGISTER/PUSH/
+  STATUS/UNREGISTER, all 4xx paths, `Auth-Token`, `Seq` gap detection, version validation, and the operator
+  REPL (including Plot-ID broadcast) get tested — automates what was previously manual background-process
+  testing. To add a case: connect a `TestClient`, send an `encodeRequest(...)`, assert on `await client.next()`;
+  to test the REPL, use `server.send('command ...')` and read the pushed COMMAND off a connected client, or
+  `server.waitForLogContains(...)` for server-side-only effects (e.g. an unknown-target error).
 
 Note: `tsconfig.json` intentionally omits `moduleResolution` — TypeScript 7 changed its behavior, and setting
 it to `"node"` breaks the build. Don't add it back without checking.
