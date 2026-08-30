@@ -167,21 +167,14 @@ function broadcastClientList() {
   io.emit('client:list', serializeClients());
 }
 
-function createServerInstance(port: number, secret?: string): ServerInstance {
-  const args = ['src/server/index.ts', String(port)];
-  if (secret) args.push('--secret', secret);
+/** (Re)spawns the process for an existing ServerInstance — used by both create and Start. */
+function spawnServerProcess(instance: ServerInstance) {
+  const args = ['src/server/index.ts', String(instance.port)];
+  if (instance.secret) args.push('--secret', instance.secret);
   const child = spawnVmp(args);
-
-  const instance: ServerInstance = {
-    id: randomUUID(),
-    port,
-    secret,
-    child,
-    log: [],
-    status: 'starting',
-    registeredNodes: new Map(),
-  };
-  servers.set(instance.id, instance);
+  instance.child = child;
+  instance.status = 'starting';
+  instance.registeredNodes.clear(); // a fresh process has no registrations yet
 
   attachLogging(child, 'server', instance.id, instance.log, (line) => handleServerLogLine(instance, line));
   child.on('spawn', () => {
@@ -197,45 +190,38 @@ function createServerInstance(port: number, secret?: string): ServerInstance {
     appendLog('server', instance.id, instance.log, `[dashboard] spawn error: ${err.message}`);
     broadcastServerList();
   });
+}
 
+function createServerInstance(port: number, secret?: string): ServerInstance {
+  const instance: ServerInstance = {
+    id: randomUUID(),
+    port,
+    secret,
+    child: null as unknown as ChildProcess, // set synchronously by spawnServerProcess below
+    log: [],
+    status: 'starting',
+    registeredNodes: new Map(),
+  };
+  servers.set(instance.id, instance);
+  spawnServerProcess(instance);
   return instance;
 }
 
-function createClientInstance(opts: {
-  nodeType: string;
-  nodeId: string;
-  plotId: string;
-  targetHost: string;
-  targetPort: number;
-  interval: number;
-  token?: string;
-}): ClientInstance {
+/** (Re)spawns the process for an existing ClientInstance — used by both create and Start. */
+function spawnClientProcess(instance: ClientInstance) {
   const args = [
     'src/client/index.ts',
-    '--type', opts.nodeType,
-    '--id', opts.nodeId,
-    '--plot', opts.plotId,
-    '--host', opts.targetHost,
-    '--port', String(opts.targetPort),
-    '--interval', String(opts.interval),
+    '--type', instance.nodeType,
+    '--id', instance.nodeId,
+    '--plot', instance.plotId,
+    '--host', instance.targetHost,
+    '--port', String(instance.targetPort),
+    '--interval', String(instance.interval),
   ];
-  if (opts.token) args.push('--token', opts.token);
+  if (instance.token) args.push('--token', instance.token);
   const child = spawnVmp(args);
-
-  const instance: ClientInstance = {
-    id: randomUUID(),
-    nodeId: opts.nodeId,
-    nodeType: opts.nodeType,
-    plotId: opts.plotId,
-    targetHost: opts.targetHost,
-    targetPort: opts.targetPort,
-    interval: opts.interval,
-    token: opts.token,
-    child,
-    log: [],
-    status: 'starting',
-  };
-  clients.set(instance.id, instance);
+  instance.child = child;
+  instance.status = 'starting';
 
   attachLogging(child, 'client', instance.id, instance.log, () => {});
   child.on('spawn', () => {
@@ -251,8 +237,40 @@ function createClientInstance(opts: {
     appendLog('client', instance.id, instance.log, `[dashboard] spawn error: ${err.message}`);
     broadcastClientList();
   });
+}
 
+function createClientInstance(opts: {
+  nodeType: string;
+  nodeId: string;
+  plotId: string;
+  targetHost: string;
+  targetPort: number;
+  interval: number;
+  token?: string;
+}): ClientInstance {
+  const instance: ClientInstance = {
+    id: randomUUID(),
+    nodeId: opts.nodeId,
+    nodeType: opts.nodeType,
+    plotId: opts.plotId,
+    targetHost: opts.targetHost,
+    targetPort: opts.targetPort,
+    interval: opts.interval,
+    token: opts.token,
+    child: null as unknown as ChildProcess, // set synchronously by spawnClientProcess below
+    log: [],
+    status: 'starting',
+  };
+  clients.set(instance.id, instance);
+  spawnClientProcess(instance);
   return instance;
+}
+
+/** Finds the dashboard-managed server (if any) that a client is currently pointed at. */
+function findManagingServer(instance: ClientInstance): ServerInstance | undefined {
+  const isLoopback = ['127.0.0.1', 'localhost', '::1'].includes(instance.targetHost);
+  if (!isLoopback) return undefined;
+  return [...servers.values()].find((s) => s.port === instance.targetPort && s.status === 'running');
 }
 
 type Ack = (res: { ok: boolean; id?: string; error?: string }) => void;
@@ -278,6 +296,17 @@ io.on('connection', (socket) => {
     } catch (err) {
       ack?.({ ok: false, error: (err as Error).message });
     }
+  });
+
+  socket.on('server:start', ({ id }: { id: string }, ack?: Ack) => {
+    const instance = servers.get(id);
+    if (!instance) return ack?.({ ok: false, error: 'not found' });
+    if (instance.status === 'running' || instance.status === 'starting') {
+      return ack?.({ ok: false, error: 'already running' });
+    }
+    spawnServerProcess(instance);
+    broadcastServerList();
+    ack?.({ ok: true });
   });
 
   socket.on('server:kill', ({ id }: { id: string }, ack?: Ack) => {
@@ -344,10 +373,45 @@ io.on('connection', (socket) => {
     }
   );
 
+  socket.on('client:start', ({ id }: { id: string }, ack?: Ack) => {
+    const instance = clients.get(id);
+    if (!instance) return ack?.({ ok: false, error: 'not found' });
+    if (instance.status === 'running' || instance.status === 'starting') {
+      return ack?.({ ok: false, error: 'already running' });
+    }
+    spawnClientProcess(instance);
+    broadcastClientList();
+    ack?.({ ok: true });
+  });
+
   socket.on('client:stop', ({ id }: { id: string }, ack?: Ack) => {
     const instance = clients.get(id);
     if (!instance) return ack?.({ ok: false, error: 'not found' });
-    instance.child.kill('SIGINT'); // triggers the client's own UNREGISTER-then-exit path
+
+    // Graceful stop is routed through the protocol itself (a SHUTDOWN COMMAND, same as the
+    // Server panel's command form) rather than an OS signal: on Windows, node's
+    // child_process.kill('SIGINT'/'SIGTERM') can't actually deliver a signal to a Node child
+    // at all (Windows has no POSIX signals) — it just force-terminates, identical to SIGKILL.
+    // SHUTDOWN is TCP-level, so it works the same on every platform.
+    const managingServer = findManagingServer(instance);
+    if (managingServer) {
+      managingServer.child.stdin?.write(`command ${instance.nodeId} SHUTDOWN\n`);
+      // Fallback in case SHUTDOWN had no effect (e.g. the client never got past REGISTER, or
+      // is mid-reconnect and not currently connected to this server at all).
+      setTimeout(() => {
+        if (instance.status === 'running' || instance.status === 'starting') {
+          instance.child.kill('SIGKILL');
+        }
+      }, 2000);
+    } else {
+      appendLog(
+        'client',
+        id,
+        instance.log,
+        "[dashboard] no dashboard-managed server found for this client's target — using a hard kill instead of a graceful SHUTDOWN"
+      );
+      instance.child.kill('SIGKILL');
+    }
     ack?.({ ok: true });
   });
 

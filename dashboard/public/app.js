@@ -111,10 +111,17 @@ function renderServers(list) {
       killBtn.onclick = () => socket.emit('server:kill', { id: server.id });
       card.actionsEl.appendChild(killBtn);
     } else {
+      const startBtn = document.createElement('button');
+      startBtn.className = 'start';
+      startBtn.textContent = 'Start';
+      startBtn.title = 'Respawn on the same port' + (server.secured ? ' with the same secret' : '');
+      startBtn.onclick = () => socket.emit('server:start', { id: server.id });
+
       const removeBtn = document.createElement('button');
       removeBtn.textContent = 'Remove';
       removeBtn.onclick = () => socket.emit('server:remove', { id: server.id });
-      card.actionsEl.appendChild(removeBtn);
+
+      card.actionsEl.append(startBtn, removeBtn);
     }
 
     card.nodesEl.innerHTML = '';
@@ -177,21 +184,28 @@ function renderClients(list) {
       const stopBtn = document.createElement('button');
       stopBtn.className = 'stop';
       stopBtn.textContent = 'Stop';
-      stopBtn.title = 'SIGINT — sends UNREGISTER, exits gracefully';
+      stopBtn.title = 'Graceful: sends a SHUTDOWN COMMAND via its server (sends UNREGISTER, exits on its own)';
       stopBtn.onclick = () => socket.emit('client:stop', { id: client.id });
 
       const killBtn = document.createElement('button');
       killBtn.className = 'kill';
       killBtn.textContent = 'Kill';
-      killBtn.title = 'SIGKILL — ungraceful drop, demos the server-side ECONNRESET cleanup';
+      killBtn.title = 'Ungraceful: SIGKILL — demos the server-side ECONNRESET cleanup, not client-side reconnect';
       killBtn.onclick = () => socket.emit('client:kill', { id: client.id });
 
       card.actionsEl.append(stopBtn, killBtn);
     } else {
+      const startBtn = document.createElement('button');
+      startBtn.className = 'start';
+      startBtn.textContent = 'Start';
+      startBtn.title = 'Respawn with the same node/target settings';
+      startBtn.onclick = () => socket.emit('client:start', { id: client.id });
+
       const removeBtn = document.createElement('button');
       removeBtn.textContent = 'Remove';
       removeBtn.onclick = () => socket.emit('client:remove', { id: client.id });
-      card.actionsEl.appendChild(removeBtn);
+
+      card.actionsEl.append(startBtn, removeBtn);
     }
   }
   for (const [id, card] of clientCards) {

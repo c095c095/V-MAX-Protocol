@@ -87,9 +87,11 @@ it to `"node"` breaks the build. Don't add it back without checking.
 
 `npm run dashboard` starts a small Express + Socket.IO app (`dashboard/server.ts`, static frontend in
 `dashboard/public/`) on `http://127.0.0.1:3000` (binds to localhost only — it can spawn arbitrary child
-processes). It lets you create/kill multiple VMP server instances (each its own port, optional `--secret`),
-create/stop/kill simulated client nodes targeting any of them, send COMMANDs to a Node-ID or Plot-ID from a
-form (mirrors `server/repl.ts`), and watch every process's log live, parsed and color-coded by status/method.
+processes). It lets you create/start/kill/remove multiple VMP server instances (each its own port, optional
+`--secret`), create/start/stop/kill/remove simulated client nodes targeting any of them, send COMMANDs to a
+Node-ID or Plot-ID from a form (mirrors `server/repl.ts`), and watch every process's log live, parsed and
+color-coded by status/method. Start respawns a stopped instance with the same settings (port/secret, or
+node/target/interval/token); Remove only works once stopped, and drops it from the list entirely.
 
 It's built entirely by **spawning the real, unmodified `src/server/index.ts` / `src/client/index.ts`** the
 same way `tests/integration.test.ts` does (`spawn(process.execPath, ['--import', 'tsx', ...])` — a direct
@@ -98,6 +100,20 @@ regexes over `formatForLog`'s output — it never imports or modifies protocol c
 `server/handlers.ts` or `server/repl.ts` print, check `dashboard/server.ts`'s `REGISTERED_LIST_RE` /
 `REGISTER_HEADERS_RE` / `REMOVED_NODE_RE` still match; if you change the log format, dashboard breakage is a
 signal, not code to keep in sync proactively.
+
+**Client Stop vs. Kill — important platform caveat.** Kill is `child.kill('SIGKILL')`, always an unconditional
+hard termination — used to demo the server's ungraceful-disconnect cleanup (`ECONNRESET` → node removed).
+Stop is deliberately **not** `child.kill('SIGINT')`: on Windows, Node's `child_process.kill()` cannot deliver
+a real signal to a child process at all (Windows has no POSIX signals) — every signal name unconditionally
+terminates the process, so `'SIGINT'` and `'SIGKILL'` would behave identically and the client's own graceful
+`process.on('SIGINT', ...)` handler (which sends `UNREGISTER`) would never run. Instead, Stop finds the
+dashboard-managed server this client is currently pointed at (matching on `targetHost`/`targetPort`, loopback
+only) and writes `command <Node-ID> SHUTDOWN\n` to *that server's* stdin — the exact same mechanism the
+Server panel's command form uses. The client already handles `SHUTDOWN` correctly (`client/commands.ts`):
+responds `200`, sends `UNREGISTER`, exits on its own. This is TCP/protocol-level, not OS-signal-level, so it
+works identically on every platform. A 2s fallback hard-kills the process if `SHUTDOWN` had no visible effect
+(e.g. it was never actually registered); if no managed server can be found for the target at all (an external
+server, not one this dashboard spawned), Stop logs a note and falls back to `SIGKILL` directly.
 
 Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
 assignment's three deliverables — useful for the demo video, nothing more.

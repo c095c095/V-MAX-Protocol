@@ -158,6 +158,7 @@ header h1 {
 
 .card-actions button.kill { color: var(--err); border-color: var(--err); }
 .card-actions button.stop { color: var(--warn); border-color: var(--warn); }
+.card-actions button.start { color: var(--ok); border-color: var(--ok); }
 .card-actions button:hover { filter: brightness(1.2); }
 
 .node-chips {
