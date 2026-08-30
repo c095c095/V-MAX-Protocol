@@ -1,4 +1,4 @@
-# VMP — V MAX Protocol
+# VMP - V MAX Protocol
 
 > **Project 1: Socket Programming**
 > Application-Layer Protocol ที่ออกแบบเอง สำหรับระบบ IoT sensor network ในฟาร์ม
@@ -28,7 +28,7 @@
 
 - [ ] สร้างโฟลเดอร์ `submit/` แล้ววางไฟล์ PDF ชื่อ `6710405516-VMP-Protocol-Design.pdf`
 - [ ] อัดวิดีโอ ≤ 15 นาที (มีภาพ/ตัวผู้บรรยายในคลิปด้วยตามที่โจทย์กำหนด)
-- [ ] อัปโหลด YouTube ตั้งเป็น **ไม่แสดงต่อสาธารณะ (Unlisted)** ไม่ใช่ **ส่วนตัว (Private)** — ไม่งั้นอาจารย์เปิดไม่ได้
+- [ ] อัปโหลด YouTube ตั้งเป็น **ไม่แสดงต่อสาธารณะ (Unlisted)** ไม่ใช่ **ส่วนตัว (Private)** - ไม่งั้นอาจารย์เปิดไม่ได้
 - [ ] แทนที่ 🔴 TODO ในตารางด้านบนด้วยลิงก์จริง
 - [ ] *(optional)* วางสไลด์ `6710405516-VMP-Presentation.pdf` ใน `submit/`
 - [ ] `git push` แล้วเปิด repo ในโหมด incognito เช็กว่าลิงก์ทุกอันกดได้จริง
@@ -54,7 +54,7 @@
 ## VMP คืออะไร
 
 **VMP (V MAX Protocol)** เป็น application-layer protocol ที่ออกแบบขึ้นเองสำหรับ **ระบบ IoT sensor
-network ในฟาร์ม** — มี sensor node หลายตัวกระจายอยู่ตามแปลงเพาะปลูก คอยวัดค่าสภาพแวดล้อมแล้วส่งเข้า
+network ในฟาร์ม** - มี sensor node หลายตัวกระจายอยู่ตามแปลงเพาะปลูก คอยวัดค่าสภาพแวดล้อมแล้วส่งเข้า
 central server ผ่าน TCP
 
 รองรับ sensor node 3 ประเภท:
@@ -65,7 +65,7 @@ central server ผ่าน TCP
 | `SoilNode` | `SOIL-xx` | `soil_ph`, `soil_moisture` |
 | `LightNode` | `LIGHT-xx` | `light_intensity` |
 
-**ลักษณะเด่นคือเป็นแบบ hybrid push/command** — node เป็นฝ่ายส่งค่าเข้ามาเอง (`PUSH`) เป็นระยะ ๆ
+**ลักษณะเด่นคือเป็นแบบ hybrid push/command** - node เป็นฝ่ายส่งค่าเข้ามาเอง (`PUSH`) เป็นระยะ ๆ
 แต่ server ก็สั่งงานย้อนกลับไปหา node ได้ (`COMMAND`) ผ่าน connection เดิมที่ลงทะเบียนไว้
 โดยไม่ต้องให้ node คอย poll ถาม
 
@@ -73,9 +73,9 @@ central server ผ่าน TCP
 
 สรุปสั้น ๆ 3 ข้อ (เหตุผลเต็มอยู่ใน PDF และ [`docs/adr/0001-tcp-only-transport.md`](docs/adr/0001-tcp-only-transport.md)):
 
-1. **ต้องการ reliable delivery** — ค่าจาก sensor เป็นข้อมูลที่นำไปตัดสินใจรดน้ำ/ให้ปุ๋ย ข้อมูลหายแล้ว
+1. **ต้องการ reliable delivery** - ค่าจาก sensor เป็นข้อมูลที่นำไปตัดสินใจรดน้ำ/ให้ปุ๋ย ข้อมูลหายแล้ว
    ไม่รู้ตัวเป็นปัญหาจริง
-2. **ต้องการ connection ที่คงอยู่** เพื่อให้ server ส่ง `COMMAND` ย้อนกลับไปหา node ได้ทันที —
+2. **ต้องการ connection ที่คงอยู่** เพื่อให้ server ส่ง `COMMAND` ย้อนกลับไปหา node ได้ทันที -
    UDP ไม่มี connection ให้ยึด server จะไม่รู้ว่าจะส่งกลับไปที่ไหน
 3. **ต้องการ byte stream ที่เรียงลำดับถูกต้อง** เพราะ message มี header + JSON body ที่ต้องอ่านต่อกัน
    เป็นก้อน (ดู [ADR 0004](docs/adr/0004-content-length-framing.md))
@@ -89,7 +89,7 @@ central server ผ่าน TCP
 
 ### รูปแบบ Message (wire format)
 
-VMP ได้แรงบันดาลใจจาก HTTP — เป็น text-based มี start line + headers + บรรทัดว่าง + JSON body
+VMP ได้แรงบันดาลใจจาก HTTP - เป็น text-based มี start line + headers + บรรทัดว่าง + JSON body
 และใช้ header `Content-Length` เป็นตัวกำหนดขอบเขตของ message (message framing)
 
 ```
@@ -102,7 +102,7 @@ Content-Length: N                    Content-Length: N
 <JSON body ขนาด N ไบต์>              <JSON body ขนาด N ไบต์>
 ```
 
-**ตัวอย่างจริง 1 คู่** — node ลงทะเบียนเข้ากับ server:
+**ตัวอย่างจริง 1 คู่** - node ลงทะเบียนเข้ากับ server:
 
 ```http
 REGISTER VMP/1.0
@@ -128,7 +128,7 @@ Content-Length: 37
 | `REGISTER` | node → server | แนะนำตัวตอนต่อครั้งแรก (`Node-ID`, `Node-Type`, `Plot-ID`) ก่อนจะ PUSH ได้ |
 | `PUSH` | node → server | ส่งค่าที่วัดได้เข้า server เป็นระยะ ๆ (node เริ่มเอง) |
 | `COMMAND` | **server → node** | สั่งงาน node ผ่าน connection เดิม |
-| `STATUS` | node → server | เช็กว่ายังลงทะเบียนอยู่ไหม — client ส่งเองอัตโนมัติทุก ๆ 3 ครั้งของ PUSH |
+| `STATUS` | node → server | เช็กว่ายังลงทะเบียนอยู่ไหม - client ส่งเองอัตโนมัติทุก ๆ 3 ครั้งของ PUSH |
 | `UNREGISTER` | node → server | แจ้งลาก่อนตัด connection อย่างสุภาพ |
 
 **COMMAND subtypes ทั้ง 5:**
@@ -136,10 +136,10 @@ Content-Length: 37
 | Subtype | args | ผลที่เกิดกับ node |
 |---|---|---|
 | `SET_INTERVAL` | `<seconds>` | เปลี่ยนความถี่การ PUSH |
-| `REPORT_NOW` | — | สั่งให้ PUSH ค่าล่าสุดทันที |
+| `REPORT_NOW` | - | สั่งให้ PUSH ค่าล่าสุดทันที |
 | `SET_THRESHOLD` | `<field> <min>` | ตั้งค่าขีดเตือน ถ้าค่าต่ำกว่าจะ PUSH ถี่ขึ้น |
 | `CALIBRATE` | `<offset>` | ปรับ offset ของเซนเซอร์ |
-| `SHUTDOWN` | — | สั่งให้ node ตัดการเชื่อมต่อและปิดตัวเอง |
+| `SHUTDOWN` | - | สั่งให้ node ตัดการเชื่อมต่อและปิดตัวเอง |
 
 ### Status Codes
 
@@ -160,7 +160,7 @@ Content-Length: 37
 
 | Header | ใช้กับ | หน้าที่ |
 |---|---|---|
-| `Seq` | PUSH | เลขลำดับ เริ่มที่ 1 และ reset ทุกครั้งที่ REGISTER ใหม่ — ให้ server ตรวจจับข้อความหาย/ซ้ำได้ ([ADR 0006](docs/adr/0006-sequence-numbers-for-gap-detection.md)) |
+| `Seq` | PUSH | เลขลำดับ เริ่มที่ 1 และ reset ทุกครั้งที่ REGISTER ใหม่ - ให้ server ตรวจจับข้อความหาย/ซ้ำได้ ([ADR 0006](docs/adr/0006-sequence-numbers-for-gap-detection.md)) |
 | `Auth-Token` | REGISTER | shared secret (ทางเลือก) เปิดใช้ด้วย `--secret` ฝั่ง server ([ADR 0008](docs/adr/0008-auth-token-authentication.md)) |
 | `Content-Length` | ทุก message | ขนาด body เป็นไบต์ ใช้ทำ framing ([ADR 0004](docs/adr/0004-content-length-framing.md)) |
 
@@ -175,13 +175,13 @@ Content-Length: 37
 │   │   ├── types.ts       #   constants: VMP_VERSION, STATUS_PHRASES, NODE_TYPE_PREFIX
 │   │   └── codec.ts       #   encode/decode + MessageParser (framing) + formatForLog
 │   ├── server/
-│   │   ├── index.ts       # ★ entry point ของ server — รับ connection, ตรวจ version, dispatch
+│   │   ├── index.ts       # ★ entry point ของ server - รับ connection, ตรวจ version, dispatch
 │   │   ├── handlers.ts    #   handleRegister / handlePush / handleStatus / handleUnregister
 │   │   ├── connectionTable.ts  # ตาราง Node-ID -> socket (ใช้ส่ง COMMAND กลับ)
 │   │   ├── auth.ts        #   ตรวจ Auth-Token
 │   │   └── repl.ts        #   REPL ให้ operator พิมพ์สั่ง COMMAND ได้สด ๆ
 │   └── client/
-│       ├── index.ts       # ★ entry point ของ client — parse CLI flags, push loop
+│       ├── index.ts       # ★ entry point ของ client - parse CLI flags, push loop
 │       ├── connection.ts  #   socket lifecycle + auto-reconnect (exponential backoff)
 │       ├── commands.ts    #   ตอบสนอง COMMAND ทั้ง 5 subtypes
 │       └── sensors.ts     #   สุ่มค่าเซนเซอร์ให้สมจริงตามชนิด node
@@ -196,7 +196,7 @@ Content-Length: 37
 ```
 
 **หมายเหตุ:** ทั้ง server และ client **พิมพ์ทุก message ที่ส่งและรับ พร้อม status code และ status
-phrase** ออกมาทาง console ตามที่โจทย์กำหนด — ดูฟังก์ชัน `formatForLog` ใน
+phrase** ออกมาทาง console ตามที่โจทย์กำหนด - ดูฟังก์ชัน `formatForLog` ใน
 [`src/protocol/codec.ts`](src/protocol/codec.ts) และ `log()` ใน
 [`src/server/handlers.ts`](src/server/handlers.ts)
 
@@ -207,7 +207,7 @@ phrase** ออกมาทาง console ตามที่โจทย์ก�
 ### ความต้องการ
 
 - **Node.js 20 ขึ้นไป** (พัฒนาและทดสอบบน Node.js v24)
-- ไม่ต้อง build — รัน TypeScript ตรง ๆ ผ่าน `tsx`
+- ไม่ต้อง build - รัน TypeScript ตรง ๆ ผ่าน `tsx`
 
 ### ติดตั้ง
 
@@ -227,7 +227,7 @@ npx tsx src/server/index.ts 4000
 | อาร์กิวเมนต์ | จำเป็น | ค่าเริ่มต้น | ความหมาย |
 |---|---|---|---|
 | `<port>` | ไม่ | `4000` | พอร์ตที่ server จะฟัง |
-| `--secret <token>` | ไม่ | *(ปิด)* | เปิดโหมดตรวจ `Auth-Token` — client ต้องส่ง `--token` ที่ตรงกัน |
+| `--secret <token>` | ไม่ | *(ปิด)* | เปิดโหมดตรวจ `Auth-Token` - client ต้องส่ง `--token` ที่ตรงกัน |
 
 ### รัน client (จำลอง sensor node 1 ตัว)
 
@@ -241,13 +241,13 @@ npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PLOT-01 --p
 
 | Flag | จำเป็น | ค่าเริ่มต้น | ความหมาย |
 |---|---|---|---|
-| `--type` | ✅ | — | `TempHumidNode` \| `SoilNode` \| `LightNode` |
-| `--id` | ✅ | — | Node-ID — **prefix ต้องตรงกับ type** (`TEMP-` / `SOIL-` / `LIGHT-`) |
-| `--plot` | ✅ | — | Plot-ID รูปแบบ `PLOT-xx` |
+| `--type` | ✅ | - | `TempHumidNode` \| `SoilNode` \| `LightNode` |
+| `--id` | ✅ | - | Node-ID - **prefix ต้องตรงกับ type** (`TEMP-` / `SOIL-` / `LIGHT-`) |
+| `--plot` | ✅ | - | Plot-ID รูปแบบ `PLOT-xx` |
 | `--host` | ไม่ | `localhost` | host ของ server |
 | `--port` | ไม่ | `4000` | port ของ server |
 | `--interval` | ไม่ | `5` | ส่ง PUSH ทุกกี่วินาที |
-| `--token` | ไม่ | — | ใส่เมื่อ server เปิด `--secret` |
+| `--token` | ไม่ | - | ใส่เมื่อ server เปิด `--secret` |
 
 กด `Ctrl+C` เพื่อให้ client ส่ง `UNREGISTER` แล้วปิดอย่างสุภาพ
 
@@ -273,11 +273,11 @@ help                                                   แสดงคำสั�
 ## สถานการณ์ทดสอบ
 
 ทุกเคสด้านล่างรันได้จริงและ log ที่แสดงเป็น **output จริงจากการรัน** (ค่าตัวเลขและ timestamp
-จะต่างกันไปในแต่ละครั้ง) — เปิด terminal แยกกันตามที่ระบุ
+จะต่างกันไปในแต่ละครั้ง) - เปิด terminal แยกกันตามที่ระบุ
 
 ---
 
-### 1️⃣ Happy path — REGISTER → 201 → PUSH → 200
+### 1️⃣ Happy path - REGISTER → 201 → PUSH → 200
 
 ```bash
 # Terminal A
@@ -297,11 +297,11 @@ npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PLOT-01 --p
 ```
 
 > 💡 ปล่อยทิ้งไว้สักพัก จะเห็น `STATUS` โผล่มาเองทุก ๆ PUSH ครั้งที่ 3 พร้อมคำตอบ
-> `VMP/1.0 200 OK | ... | {"registered":true}` — เป็น self-check ของ client ([ADR 0012](docs/adr/0012-client-periodic-status-heartbeat.md))
+> `VMP/1.0 200 OK | ... | {"registered":true}` - เป็น self-check ของ client ([ADR 0012](docs/adr/0012-client-periodic-status-heartbeat.md))
 
 ---
 
-### 2️⃣ `400 BadRequest` — Node-ID ไม่ตรงกับ Node-Type
+### 2️⃣ `400 BadRequest` - Node-ID ไม่ตรงกับ Node-Type
 
 ```bash
 npx tsx src/client/index.ts --type SoilNode --id TEMP-99 --plot PLOT-01 --port 4000
@@ -315,7 +315,7 @@ Registration failed, exiting.
 
 ---
 
-### 3️⃣ `409 DuplicateNode` — Node-ID ซ้ำกับที่ลงทะเบียนไว้แล้ว
+### 3️⃣ `409 DuplicateNode` - Node-ID ซ้ำกับที่ลงทะเบียนไว้แล้ว
 
 ขณะที่ `TEMP-01` จากเคสที่ 1 ยังรันอยู่ ให้เปิด terminal ที่สามแล้วรัน `TEMP-01` ซ้ำ:
 
@@ -331,7 +331,7 @@ Registration failed, exiting.
 
 ---
 
-### 4️⃣ `401 Unregistered` — ส่ง PUSH ก่อน REGISTER
+### 4️⃣ `401 Unregistered` - ส่ง PUSH ก่อน REGISTER
 
 เคสนี้ client ปกติทำไม่ได้ (มันจะ REGISTER ก่อนเสมอ) จึงพิสูจน์ผ่านชุดทดสอบอัตโนมัติแทน:
 
@@ -347,16 +347,16 @@ npm test   # ดูเคส "PUSH before REGISTER" ใน tests/integration.tes
 
 ---
 
-### 5️⃣ `403 Forbidden` — Auth-Token ไม่ถูกต้อง
+### 5️⃣ `403 Forbidden` - Auth-Token ไม่ถูกต้อง
 
 ```bash
-# Terminal A — server ที่เปิดโหมดตรวจ token
+# Terminal A - server ที่เปิดโหมดตรวจ token
 npx tsx src/server/index.ts 4001 --secret farm123
 
-# Terminal B — ไม่ใส่ token → ถูกปฏิเสธ
+# Terminal B - ไม่ใส่ token → ถูกปฏิเสธ
 npx tsx src/client/index.ts --type SoilNode --id SOIL-01 --plot PLOT-02 --port 4001
 
-# Terminal B — ใส่ token ถูกต้อง → ผ่าน
+# Terminal B - ใส่ token ถูกต้อง → ผ่าน
 npx tsx src/client/index.ts --type SoilNode --id SOIL-01 --plot PLOT-02 --port 4001 --token farm123
 ```
 
@@ -388,7 +388,7 @@ npx tsx src/client/index.ts --type LightNode --id LIGHT-01 --plot PLOT-01 --port
 > command TEMP-01 SET_INTERVAL 3
 ```
 
-**สิ่งที่ควรเห็นฝั่ง server** — คำสั่งเดียวถูกส่งออกไปทั้งสอง node:
+**สิ่งที่ควรเห็นฝั่ง server** - คำสั่งเดียวถูกส่งออกไปทั้งสอง node:
 ```
 registered nodes: [LIGHT-01, TEMP-01]
 > [LIGHT-01] -> COMMAND {"command":"REPORT_NOW"}
@@ -404,22 +404,22 @@ registered nodes: [LIGHT-01, TEMP-01]
 
 ---
 
-### 7️⃣ Ungraceful disconnect — node ตายกะทันหัน server ต้องไม่ล่ม
+### 7️⃣ Ungraceful disconnect - node ตายกะทันหัน server ต้องไม่ล่ม
 
 ปิด client แบบไม่สุภาพ (ปิดหน้าต่าง terminal ทิ้ง หรือ `kill -9`) แทนการกด `Ctrl+C`
 
-**สิ่งที่ควรเห็นฝั่ง server** — เก็บกวาดเองแล้วทำงานต่อ ไม่ crash:
+**สิ่งที่ควรเห็นฝั่ง server** - เก็บกวาดเองแล้วทำงานต่อ ไม่ crash:
 ```
 [server] connection closed, removed node 'TEMP-01'
 ```
 
 ---
 
-### 8️⃣ Auto-reconnect — ปิด **server** ทิ้ง แล้วเปิดใหม่
+### 8️⃣ Auto-reconnect - ปิด **server** ทิ้ง แล้วเปิดใหม่
 
 ขณะที่ client กำลัง PUSH อยู่ ให้ปิด **server** (ไม่ใช่ client) แล้วดู log ฝั่ง client
 
-**สิ่งที่ควรเห็นฝั่ง client** — พยายามต่อใหม่แบบ exponential backoff ([ADR 0007](docs/adr/0007-client-auto-reconnect.md)):
+**สิ่งที่ควรเห็นฝั่ง client** - พยายามต่อใหม่แบบ exponential backoff ([ADR 0007](docs/adr/0007-client-auto-reconnect.md)):
 ```
 Connection lost, reconnecting in 1s...
 Socket error: connect ECONNREFUSED 127.0.0.1:4000
@@ -439,7 +439,7 @@ npm test
 ```
 
 คำสั่งนี้จะทำสองอย่างต่อกัน: `tsc --noEmit` (ตรวจ type ทั้งโปรเจกต์) แล้วรันชุดทดสอบด้วย test
-runner ที่มากับ Node.js เอง — **ไม่มี dependency สำหรับทดสอบเพิ่มเลยแม้แต่ตัวเดียว**
+runner ที่มากับ Node.js เอง - **ไม่มี dependency สำหรับทดสอบเพิ่มเลยแม้แต่ตัวเดียว**
 
 ```
 ℹ tests 27
@@ -450,27 +450,27 @@ runner ที่มากับ Node.js เอง — **ไม่มี dependen
 | ไฟล์ | ครอบคลุมอะไร |
 |---|---|
 | [`tests/protocol.test.ts`](tests/protocol.test.ts) | encode/decode ไป-กลับ, `MessageParser` กับเคสยาก ๆ ของ TCP (message เดียวมาไม่ครบใน 1 chunk, หลาย message มาใน chunk เดียว), `formatForLog` |
-| [`tests/integration.test.ts`](tests/integration.test.ts) | **เปิด server จริงแล้วยิงผ่าน TCP socket จริง** — REGISTER/PUSH/STATUS/UNREGISTER, ทุกเคส 4xx, `Auth-Token`, การตรวจจับ `Seq` gap, การตรวจ version, และ REPL รวมถึงการ broadcast ด้วย Plot-ID |
+| [`tests/integration.test.ts`](tests/integration.test.ts) | **เปิด server จริงแล้วยิงผ่าน TCP socket จริง** - REGISTER/PUSH/STATUS/UNREGISTER, ทุกเคส 4xx, `Auth-Token`, การตรวจจับ `Seq` gap, การตรวจ version, และ REPL รวมถึงการ broadcast ด้วย Plot-ID |
 
 ---
 
-## Dashboard (เครื่องมือช่วย demo — ไม่ใช่ส่วนที่ส่งตรวจ)
+## Dashboard (เครื่องมือช่วย demo - ไม่ใช่ส่วนที่ส่งตรวจ)
 
 ```bash
 npm run dashboard      # เปิดที่ http://127.0.0.1:3000
 ```
 
-หน้าเว็บสำหรับ **ใช้ประกอบการ demo ในวิดีโอ** — สร้าง/ปิด server หลายตัวคนละพอร์ต สร้าง sensor node
+หน้าเว็บสำหรับ **ใช้ประกอบการ demo ในวิดีโอ** - สร้าง/ปิด server หลายตัวคนละพอร์ต สร้าง sensor node
 หลายตัว ส่ง COMMAND จากฟอร์ม และดู log ของทุก process พร้อมกันแบบ real-time โดยไม่ต้องสลับ terminal
 หลายบาน
 
-> ⚠️ **ขอย้ำว่านี่ไม่ใช่ส่วนหนึ่งของงานที่ส่งตรวจ** และ **ไม่ได้แตะโค้ด protocol เลย** —
+> ⚠️ **ขอย้ำว่านี่ไม่ใช่ส่วนหนึ่งของงานที่ส่งตรวจ** และ **ไม่ได้แตะโค้ด protocol เลย** -
 > มันทำงานด้วยการ `spawn` process ของ `src/server/index.ts` และ `src/client/index.ts`
 > **ตัวจริง ที่ไม่ถูกแก้ไขใด ๆ** แล้วอ่าน stdout ของมันมาแสดงผลเท่านั้น
 > (วิธีเดียวกับที่ `tests/integration.test.ts` ทำ) การสื่อสารทั้งหมดที่เห็นบนหน้าเว็บ
 > จึงเป็น VMP over TCP ของจริง 100%
 
-**สิ่งที่ demo ผ่าน dashboard ไม่ได้:** การตรวจจับ `Seq` gap และการตรวจ protocol version — ทั้งสอง
+**สิ่งที่ demo ผ่าน dashboard ไม่ได้:** การตรวจจับ `Seq` gap และการตรวจ protocol version - ทั้งสอง
 อย่างต้องส่ง byte ที่จงใจผิดรูปเข้าไป ซึ่ง client ปกติไม่มีทางส่ง ดูหัวข้อถัดไป
 
 ---
@@ -481,18 +481,18 @@ npm run dashboard      # เปิดที่ http://127.0.0.1:3000
 
 1. **`Seq` gap detection ([ADR 0006](docs/adr/0006-sequence-numbers-for-gap-detection.md)) และการตรวจ
    protocol version ([ADR 0009](docs/adr/0009-protocol-version-validation.md)) พิสูจน์ได้เฉพาะใน
-   `npm test` เท่านั้น** ไม่สามารถ demo สดได้ — เพราะทั้งสองอย่างจะทำงานก็ต่อเมื่อได้รับข้อมูลที่ผิดรูป
+   `npm test` เท่านั้น** ไม่สามารถ demo สดได้ - เพราะทั้งสองอย่างจะทำงานก็ต่อเมื่อได้รับข้อมูลที่ผิดรูป
    โดยเจตนา ซึ่ง client ที่เขียนถูกต้องไม่มีวันส่งออกไป `tests/integration.test.ts` จึงประกอบ byte
    ขึ้นมาเองเพื่อทดสอบส่วนนี้โดยเฉพาะ **นี่เป็นเรื่องปกติของโค้ดประเภท validation/anomaly detection
    ไม่ใช่ข้อบกพร่องของการออกแบบ**
 
-2. **`Seq` ใช้ตรวจจับ ไม่ใช่ retransmission layer** — VMP บอกได้ว่ามีข้อความหายไประหว่างการ
+2. **`Seq` ใช้ตรวจจับ ไม่ใช่ retransmission layer** - VMP บอกได้ว่ามีข้อความหายไประหว่างการ
    reconnect แต่ไม่ได้ขอส่งซ้ำ เพราะค่าจาก sensor ที่เก่าไปแล้วมักไม่มีประโยชน์เท่าค่าปัจจุบัน
 
-3. **ยังไม่มี TLS** — `Auth-Token` เป็น shared secret ที่ส่งไปแบบ plaintext เหมาะกับเครือข่ายภายใน
+3. **ยังไม่มี TLS** - `Auth-Token` เป็น shared secret ที่ส่งไปแบบ plaintext เหมาะกับเครือข่ายภายใน
    ฟาร์มเท่านั้น เหตุผลที่เลื่อน TLS ออกไปอยู่ใน [ADR 0008](docs/adr/0008-auth-token-authentication.md)
 
-4. **สิ่งที่ตั้งใจไม่ทำในเวอร์ชันนี้** — session resumption แบบเต็มรูปแบบ, การกันข้อความซ้ำด้วย
+4. **สิ่งที่ตั้งใจไม่ทำในเวอร์ชันนี้** - session resumption แบบเต็มรูปแบบ, การกันข้อความซ้ำด้วย
    Message-ID, และ batch PUSH รายละเอียดและเหตุผลอยู่ในหัวข้อ future work ของ
    [ADR 0011](docs/adr/0011-comparison-with-existing-protocols.md)
 
@@ -505,10 +505,10 @@ npm run dashboard      # เปิดที่ http://127.0.0.1:3000
 | ไฟล์ | คืออะไร |
 |---|---|
 | [`docs/CONTEXT.md`](docs/CONTEXT.md) | glossary ของ domain + protocol ทั้งหมด (node types, methods, status codes, naming convention) |
-| [`docs/protocol-design.html`](docs/protocol-design.html) | **เอกสารอ้างอิงประกอบ** — ฉบับที่ใช้ส่งจริงคือไฟล์ PDF ใน `submit/` |
+| [`docs/protocol-design.html`](docs/protocol-design.html) | **เอกสารอ้างอิงประกอบ** - ฉบับที่ใช้ส่งจริงคือไฟล์ PDF ใน `submit/` |
 | [`docs/video-script.md`](docs/video-script.md) | สคริปต์และการแบ่งเวลาสำหรับอัดวิดีโอ |
 
-### ADR — บันทึกเหตุผลของทุกการตัดสินใจ
+### ADR - บันทึกเหตุผลของทุกการตัดสินใจ
 
 | ADR | หัวข้อ |
 |---|---|
