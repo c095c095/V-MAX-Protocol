@@ -41,38 +41,36 @@ long — see `CLAUDE.md`'s Architecture section for the full per-file breakdown.
 - Type-checks clean (`npx tsc --noEmit`, TypeScript 7 / `tsx` runtime — note `moduleResolution` had to be
   dropped from `tsconfig.json`, not set to `"node"`, due to a TS7 breaking change).
 
-**Tested and passing** (manually, via background processes + log inspection, not committed as automated
-tests):
-- Happy path: REGISTER→201, then PUSH loop→200 repeatedly, `Seq` incrementing cleanly.
-- Duplicate REGISTER on the same Node-ID→409.
-- Node-ID prefix not matching Node-Type→400.
-- `Auth-Token`: no token→403, wrong token→403, correct token→201 (against a server started with `--secret`).
-- Auto-reconnect: killed the server mid-session, client logged backoff (1s→2s→4s→8s...), reconnected and
-  re-REGISTERed cleanly once the server came back, `Seq` reset to 1. **Found and fixed a real bug during this
-  test**: the client's push-interval timer wasn't cleared on disconnect, so after a reconnect a second timer
-  stacked on top of the first, causing duplicate/phantom PUSH log lines during the outage. Fixed via a new
-  `onDisconnect` callback in `client/connection.ts` that clears the timer before the reconnect attempt; confirmed
-  fixed by re-running the same kill/restart test and observing a single clean PUSH stream afterward.
-- Plot-ID broadcast COMMAND: two nodes registered under the same Plot-ID both received and logged a single
-  `command <Plot-ID> SET_INTERVAL 1` individually, and both correctly dropped their push interval.
-- Ungraceful disconnect (client process killed): server logged `ECONNRESET` and cleaned up the node entry
-  without crashing.
+**`npm test` now runs an automated suite** (`tests/protocol.test.ts` + `tests/integration.test.ts`, Node's
+built-in test runner via `tsx --test`, zero new dependencies — see `CLAUDE.md`'s Tests section for how it's
+structured). 26 tests, all passing:
+- Unit: request/response encode-decode round-tripping, `MessageParser` chunking (partial chunks, multiple
+  messages in one TCP chunk), `formatForLog`.
+- Integration (spawns the real server, drives it over real TCP sockets): REGISTER happy path→201→PUSH→200,
+  duplicate REGISTER→409, Node-ID/Node-Type mismatch→400, PUSH before REGISTER→401, STATUS on an unregistered
+  node→401, ungraceful disconnect + re-registration, version mismatch→400, `Seq` gap detection+log, `Auth-Token`
+  (no/wrong/correct token, and an unsecured server ignoring it), operator REPL `command <Node-ID>` and
+  `command <Plot-ID>` broadcast, and an unknown REPL target logging cleanly instead of crashing.
 
-**Not yet tested** — these were the agreed demo scenarios and still need a verification pass before being
-demo-ready:
-- Multiple nodes connected concurrently across 3+ different node types/plots at once (only 2-at-a-time tested
-  so far).
-- COMMAND round-trip for all 5 subtypes via the server REPL against a single Node-ID target (only
-  `SET_INTERVAL` and the Plot-ID broadcast path were exercised above).
-- PUSH before REGISTER→401.
-- STATUS→401 after a simulated server restart (i.e. node's old registration no longer exists).
-- Version-mismatch rejection (ADR 0009) — not exercised with a live client, since the client always sends the
-  correct `VMP/1.0`; the check itself is a one-line string comparison in `server/index.ts` and type-checks, but
-  hasn't been exercised end-to-end with a deliberately wrong version.
+Also manually verified once during implementation (see git history around ADRs 0006–0010's commits) — worth
+noting because a real bug was **found and fixed** during that manual pass, before the automated suite existed:
+auto-reconnect's push-interval timer wasn't cleared on disconnect, so a reconnect stacked a second timer on top
+of the first, causing duplicate/phantom PUSH log lines during an outage. Fixed via a new `onDisconnect` callback
+in `client/connection.ts`.
 
-To rerun the happy-path/error checks: start the server (`npx tsx src/server/index.ts <port>`), then in another
-terminal run the client (`npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PLOT-01 --port
-<port> --interval 2`). Both print every message with full status code/phrase per the assignment requirement.
+**Still not covered by the automated suite** — worth a manual pass before the video demo, since these need
+either 3+ concurrent processes or literally restarting the server:
+- Multiple nodes connected concurrently across 3+ different node types/plots at once (integration tests only
+  exercise 1–2 at a time).
+- COMMAND round-trip for the remaining subtypes via the REPL (`SET_INTERVAL`, `SET_THRESHOLD`, `SHUTDOWN` —
+  only `REPORT_NOW` and `CALIBRATE` are exercised in `tests/integration.test.ts`; trivial to extend, same
+  pattern as the existing REPL tests).
+- STATUS→401 after an *actual* server restart (the automated test approximates this with a STATUS check on a
+  Node-ID that was simply never registered, which exercises the same code path but isn't literally a restart).
+
+To rerun manually: start the server (`npx tsx src/server/index.ts <port>`), then in another terminal run the
+client (`npx tsx src/client/index.ts --type TempHumidNode --id TEMP-01 --plot PLOT-01 --port <port> --interval
+2`). Both print every message with full status code/phrase per the assignment requirement.
 
 ## Remaining work, in order of the assignment's 3 requirements
 
@@ -81,13 +79,15 @@ terminal run the client (`npx tsx src/client/index.ts --type TempHumidNode --id 
    error case). Fold in ADR 0011's MQTT/CoAP comparison table and "จุดเด่นของ VMP" summary as a supplementary
    section at the end (per the user's decision) — it's written to be reused directly, and now describes
    features that actually exist in the shipped code.
-2. **Source code** — all 5 new features (ADRs 0006–0010) implemented and tested above; the remaining untested
-   scenarios (multi-node-type concurrency, full COMMAND round-trip via REPL, 401 cases, version mismatch) still
-   need a verification pass before the video demo.
+2. **Source code** — all 5 new features (ADRs 0006–0010) implemented; `npm test` covers the core protocol
+   behavior automatically now (26 tests, see above). The remaining manual-only scenarios (3+ concurrent nodes,
+   the rest of the COMMAND subtypes via REPL, a literal server restart) still need a pass before the video demo.
 3. **Video (≤15 min)** — not started. Plan was 5 demo cases: (1) happy path (2) multi-client concurrent
    (3) errors: 409/401/400 (4) ungraceful disconnect (5) STATUS→401 post-restart. Consider adding the new
    features as extra demo beats: auth rejection (403), auto-reconnect after killing the server, and the Plot-ID
-   broadcast COMMAND — all confirmed working live during this session.
+   broadcast COMMAND — all confirmed working live during this session. The assignment explicitly asks for
+   "การทดสอบการรันโปรแกรมที่เขียนในรูปแบบต่างๆ" (testing the program in various forms) — running `npm test` on
+   camera and briefly narrating what it covers is a fast, credible way to satisfy that alongside the live demos.
 
 ## Suggested skills for next session
 
@@ -97,4 +97,4 @@ terminal run the client (`npx tsx src/client/index.ts --type TempHumidNode --id 
 
 ## Files
 
-`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npx tsc --noEmit` to confirm the environment checks out before continuing.
+`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.
