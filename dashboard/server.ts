@@ -421,12 +421,17 @@ io.on('connection', (socket) => {
     // SHUTDOWN is TCP-level, so it works the same on every platform.
     const managingServer = findManagingServer(instance);
     if (managingServer) {
+      const targetChild = instance.child; // pin the exact process this Stop applies to
       managingServer.child.stdin?.write(`command ${instance.nodeId} SHUTDOWN\n`);
       // Fallback in case SHUTDOWN had no effect (e.g. the client never got past REGISTER, or
-      // is mid-reconnect and not currently connected to this server at all).
+      // is mid-reconnect and not currently connected to this server at all). Must check
+      // `instance.child === targetChild`, not just `instance.status` — if this same client was
+      // already stopped and Start respawned it before this timer fires, `instance.child` now
+      // points at a brand-new, unrelated process; killing by `instance.child` alone would kill
+      // that new process instead of correctly no-op'ing on this stale fallback.
       setTimeout(() => {
-        if (instance.status === 'running' || instance.status === 'starting') {
-          instance.child.kill('SIGKILL');
+        if (instance.child === targetChild && (instance.status === 'running' || instance.status === 'starting')) {
+          targetChild.kill('SIGKILL');
         }
       }, 2000);
     } else {

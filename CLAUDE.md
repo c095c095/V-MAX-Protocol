@@ -101,6 +101,15 @@ regexes over `formatForLog`'s output — it never imports or modifies protocol c
 `REGISTER_HEADERS_RE` / `REMOVED_NODE_RE` still match; if you change the log format, dashboard breakage is a
 signal, not code to keep in sync proactively.
 
+**Registered-node tracking is two-stage on purpose.** `server/index.ts:34` logs the incoming `<- REGISTER ...`
+line for every attempt *before* the server decides to accept or reject it (`handlers.ts`'s 400/403/409 paths
+all run after that log line). So `REGISTER_HEADERS_RE` matches never write directly into
+`registeredNodes` — they only cache into `pendingMetadata` (a candidate, not a fact). An id is only promoted
+into `registeredNodes` when `REGISTERED_LIST_RE`'s `registered nodes: [...]` line — the one line the real
+server only prints on confirmed success/removal — actually contains it. Getting this backwards (as an earlier
+version of this file did) makes a *rejected* REGISTER show up as a connected node chip, which is exactly
+wrong for a tool whose only job is showing what's really happening — worth remembering if you touch this code.
+
 **Client Stop vs. Kill — important platform caveat.** Kill is `child.kill('SIGKILL')`, always an unconditional
 hard termination — used to demo the server's ungraceful-disconnect cleanup (`ECONNRESET` → node removed).
 Stop is deliberately **not** `child.kill('SIGINT')`: on Windows, Node's `child_process.kill()` cannot deliver
@@ -114,6 +123,22 @@ responds `200`, sends `UNREGISTER`, exits on its own. This is TCP/protocol-level
 works identically on every platform. A 2s fallback hard-kills the process if `SHUTDOWN` had no visible effect
 (e.g. it was never actually registered); if no managed server can be found for the target at all (an external
 server, not one this dashboard spawned), Stop logs a note and falls back to `SIGKILL` directly.
+
+That fallback timer pins the specific `ChildProcess` it was armed for (`const targetChild = instance.child`)
+and checks `instance.child === targetChild` before killing, not just `instance.status`. Reason: if `SHUTDOWN`
+succeeds quickly and the user clicks Start again within that same 2s window, `instance.child` gets reassigned
+to the *new* process while the stale timer is still pending — checking status alone would find it `'running'`
+again (true, but of the new process) and kill the wrong one. Confirmed this was a real bug, not
+theoretical — reproduced by scripting Stop immediately followed by Start.
+
+**Command args are subtype-aware in the UI.** `server/repl.ts`'s `buildCommandPayload` requires positional
+args for `SET_INTERVAL`/`SET_THRESHOLD`/`CALIBRATE` (space-separated in the raw REPL line) but none for
+`REPORT_NOW`/`SHUTDOWN`; sending it with no args isn't rejected with a helpful message — the REPL just prints
+`Unknown or malformed COMMAND: <subtype>` with no explanation of what was missing. `dashboard/public/app.js`'s
+`SUBTYPE_ARGS` table sets the args `<input>`'s placeholder/required/disabled state per selected subtype (on
+card creation and on every `change` of the subtype `<select>`) so the browser's native validation blocks an
+incomplete submit before it ever reaches the REPL. If you add a 6th COMMAND subtype, update `SUBTYPE_ARGS`
+alongside `buildCommandPayload`.
 
 Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
 assignment's three deliverables — useful for the demo video, nothing more.

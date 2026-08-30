@@ -89,6 +89,24 @@ cleanup, and the secured-server Auth-Token path (missing token → 403 → corre
 yet checked in an actual browser** — the JS/CSS logic is verified, but real layout/coloring rendering needs a
 manual look before relying on it for the video.
 
+Also added Start (respawn a stopped server/client with the same settings) and put it through a `/scrutinize`
+review, which caught two real bugs before either shipped further — both fixed and reverified headlessly:
+- A rejected REGISTER (400/403/409) was creating a "connected" node chip anyway, because the request line
+  gets logged before the server decides to accept/reject it. Fixed by only committing node metadata into the
+  UI's tracked list once the server's own authoritative `registered nodes: [...]` line confirms it — see
+  `CLAUDE.md`'s Dashboard section.
+- Client Stop's 2s SHUTDOWN-fallback timer could kill an unrelated *later* Start if the user restarted the
+  same client within that window — found by scripting Stop-immediately-followed-by-Start, not by reasoning
+  about it (an earlier "this can't happen through the UI" analysis was wrong). Fixed by pinning the fallback
+  to the specific process it was armed for.
+
+Also fixed a real usability bug the user hit directly: sending `SET_THRESHOLD`/`CALIBRATE` from the Server
+panel's command form with the args field left empty produced `Unknown or malformed COMMAND: SET_THRESHOLD` /
+`...CALIBRATE` from the real REPL, with no indication *why* — those two subtypes need positional args
+(`field min` / `offset`) that `REPORT_NOW`/`SHUTDOWN` don't. The args input is now subtype-aware (dynamic
+placeholder + `required`), so an incomplete submit is blocked client-side instead of round-tripping to a
+confusing server error.
+
 ## Remaining work, in order of the assignment's 3 requirements
 
 1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly
