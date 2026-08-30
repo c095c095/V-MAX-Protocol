@@ -16,24 +16,11 @@
 
 ## 📦 รายการส่งงาน
 
-| # | สิ่งที่ส่ง | ตำแหน่ง | สถานะ |
-|---|---|---|---|
-| 1 | **ไฟล์ PDF** อธิบาย protocol และตอบคำถามข้อ 1 | [`submit/6710405516-VMP-Protocol-Design.pdf`](submit/6710405516-VMP-Protocol-Design.pdf) | 🔴 **TODO: ยังไม่ได้วางไฟล์** |
-| 2 | **Source code** ของ client และ server | [`src/`](src/) | ✅ เสร็จแล้ว (`npm test` ผ่าน 27/27) |
-| 3 | **VDO Clip** นำเสนอ + demo (≤ 15 นาที) | 🔴 **TODO: ใส่ลิงก์ YouTube (unlisted) ตรงนี้ก่อนส่ง** | 🔴 ยังไม่ได้อัด |
-| + | สไลด์นำเสนอ *(optional)* | [`submit/6710405516-VMP-Presentation.pdf`](submit/6710405516-VMP-Presentation.pdf) | ⬜ optional |
-
-<details>
-<summary><b>✅ Checklist ก่อนกดส่ง</b> (คลิกเพื่อเปิด)</summary>
-
-- [ ] สร้างโฟลเดอร์ `submit/` แล้ววางไฟล์ PDF ชื่อ `6710405516-VMP-Protocol-Design.pdf`
-- [ ] อัดวิดีโอ ≤ 15 นาที (มีภาพ/ตัวผู้บรรยายในคลิปด้วยตามที่โจทย์กำหนด)
-- [ ] อัปโหลด YouTube ตั้งเป็น **ไม่แสดงต่อสาธารณะ (Unlisted)** ไม่ใช่ **ส่วนตัว (Private)** - ไม่งั้นอาจารย์เปิดไม่ได้
-- [ ] แทนที่ 🔴 TODO ในตารางด้านบนด้วยลิงก์จริง
-- [ ] *(optional)* วางสไลด์ `6710405516-VMP-Presentation.pdf` ใน `submit/`
-- [ ] `git push` แล้วเปิด repo ในโหมด incognito เช็กว่าลิงก์ทุกอันกดได้จริง
-
-</details>
+| # | สิ่งที่ส่ง | ตำแหน่ง |
+|---|---|---|
+| 1 | **ไฟล์ PDF** อธิบาย protocol และตอบคำถามข้อ 1 | [`submit/6710405516-VMP-Protocol-Design.pdf`](submit/6710405516-VMP-Protocol-Design.pdf) |
+| 2 | **Source code** ของ client และ server | [`src/`](src/) |
+| 3 | **VDO Clip** นำเสนอ + demo (≤ 15 นาที) | [`Youtube`](https://youtu.be/n5qq-IFYGIE) |
 
 ---
 
