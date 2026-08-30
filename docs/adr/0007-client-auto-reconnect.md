@@ -36,7 +36,7 @@
    ไม่สมจริงกับโจทย์ IoT sensor node ที่ทำงานอัตโนมัติไม่มีคนเฝ้า
 2. Exponential backoff ป้องกัน "reconnect storm" — ถ้า server ล่มจริงๆ หรือกำลัง restart
    node จำนวนมากจะไม่ยิง reconnect พร้อมกันถี่ๆ จนซ้ำเติมปัญหา
-3. เป็น demo scenario ที่มีอยู่แล้วในแผนของโปรเจกต์ (ดู `handoff-vmp-project.md` —
+3. เป็น demo scenario ที่มีอยู่แล้วในแผนของโปรเจกต์ (ดู `../handoff-vmp-project.md` —
    "ungraceful disconnect" เป็นหนึ่งใน 5 test scenario ที่วางแผนไว้) ฟีเจอร์นี้ทำให้
    scenario นั้นมีพฤติกรรมที่ชัดเจนกว่าเดิม ("server ต้อง log และ clean up ไม่ crash"
    ตอนนี้จะกลายเป็น "client ต้องพยายาม reconnect เองได้ด้วย")

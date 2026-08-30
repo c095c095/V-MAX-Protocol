@@ -12,13 +12,13 @@ The previous session used `/grill-with-docs` (grilling + domain-modeling skills)
 ## Where design decisions live — read these first, don't re-derive them
 
 - `CONTEXT.md` — glossary: the 3 node types, all 5 VMP methods (+ the 5 COMMAND subtypes), status codes, Node-ID/Plot-ID naming convention, timestamp format.
-- `docs/adr/0001-tcp-only-transport.md` — why TCP-only, not TCP+UDP hybrid.
-- `docs/adr/0002-text-based-json-protocol.md` — why HTTP-inspired header + JSON body, not binary.
-- `docs/adr/0003-nodejs-event-driven-concurrency.md` — concurrency model (originally designed as Python thread-per-connection, revised mid-session when the language changed to Node.js — worth reading both the decision and *why it changed*, it's a useful example of catching a stale assumption).
-- `docs/adr/0004-content-length-framing.md` — why `Content-Length` framing, not newline-delimited.
-- `docs/adr/0005-nodejs-typescript-runtime.md` — why Node.js+TypeScript over Bun (environment reliability for grading/demo, despite Bun matching the user's usual stack).
-- `docs/adr/0006-sequence-numbers-for-gap-detection.md` through `docs/adr/0010-broadcast-command-to-plot.md` — 5 new protocol features (Seq gap detection, client auto-reconnect, Auth-Token auth, version validation, Plot-ID broadcast COMMAND), added via a follow-up `/grill-with-docs` session to give VMP genuine differentiators for the Networking course comparison writeup. **Implemented and tested** — see "Implementation state" below.
-- `docs/adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison (8-axis table + balanced trade-off discussion), with a closing "จุดเด่นของ VMP" summary built from ADRs 0006–0010, plus a "future work" section for four further ideas that were deliberately deferred (full session resumption, Message-ID dedupe, batch PUSH, TLS).
+- `adr/0001-tcp-only-transport.md` — why TCP-only, not TCP+UDP hybrid.
+- `adr/0002-text-based-json-protocol.md` — why HTTP-inspired header + JSON body, not binary.
+- `adr/0003-nodejs-event-driven-concurrency.md` — concurrency model (originally designed as Python thread-per-connection, revised mid-session when the language changed to Node.js — worth reading both the decision and *why it changed*, it's a useful example of catching a stale assumption).
+- `adr/0004-content-length-framing.md` — why `Content-Length` framing, not newline-delimited.
+- `adr/0005-nodejs-typescript-runtime.md` — why Node.js+TypeScript over Bun (environment reliability for grading/demo, despite Bun matching the user's usual stack).
+- `adr/0006-sequence-numbers-for-gap-detection.md` through `adr/0010-broadcast-command-to-plot.md` — 5 new protocol features (Seq gap detection, client auto-reconnect, Auth-Token auth, version validation, Plot-ID broadcast COMMAND), added via a follow-up `/grill-with-docs` session to give VMP genuine differentiators for the Networking course comparison writeup. **Implemented and tested** — see "Implementation state" below.
+- `adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison (8-axis table + balanced trade-off discussion), with a closing "จุดเด่นของ VMP" summary built from ADRs 0006–0010, plus a "future work" section for four further ideas that were deliberately deferred (full session resumption, Message-ID dedupe, batch PUSH, TLS).
 
 ## Implementation state
 
@@ -97,4 +97,4 @@ terminal run the client (`npx tsx src/client/index.ts --type TempHumidNode --id 
 
 ## Files
 
-`CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npx tsc --noEmit` to confirm the environment checks out before continuing.
+`docs/CONTEXT.md`, `docs/adr/0001..0011`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npx tsc --noEmit` to confirm the environment checks out before continuing.

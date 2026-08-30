@@ -31,7 +31,7 @@ secret ผ่าน header `Auth-Token`**
    วิดีโอ (REGISTER ด้วย token ผิด → เห็น `403` ทันที) โดยไม่ต้องเพิ่มความซับซ้อนเรื่อง
    cert/key management
 3. Backward-compatible เต็มรูปแบบ — ไม่ใส่ `--secret` ระบบทำงานเหมือนเดิมทุกอย่าง ไม่
-   กระทบ happy-path/error-case ที่ทดสอบผ่านไปแล้วตาม `handoff-vmp-project.md`
+   กระทบ happy-path/error-case ที่ทดสอบผ่านไปแล้วตาม `../handoff-vmp-project.md`
 
 ## ทางเลือกที่พิจารณาแต่ไม่เลือก (deferred, ไม่ implement)
 
@@ -41,5 +41,5 @@ transport security ได้ลึกกว่า `Auth-Token` header เปล�
 จัดการ certificate และ private key เพิ่ม ซึ่งเพิ่มความเสี่ยงเรื่อง environment ตอน demo/
 ตรวจงาน (ประเด็นเดียวกับที่ ADR 0005 หยิบยกไว้เรื่องความน่าเชื่อถือของ environment
 ตอน grading) เมื่อชั่งเวลาที่เหลือกับ PDF/วิดีโอที่ยังไม่เริ่มเลย (ดู
-`handoff-vmp-project.md`) จึงเลือกบันทึกไว้เป็นแนวทางที่พิจารณาแล้วแต่ยังไม่ implement
+`../handoff-vmp-project.md`) จึงเลือกบันทึกไว้เป็นแนวทางที่พิจารณาแล้วแต่ยังไม่ implement
 (ดูสรุปรวมใน ADR 0011) แทนที่จะลงมือทำตอนนี้

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A KU course assignment ("Project 1: Socket Programming"): an IoT sensor-network simulation using a custom
 TCP application-layer protocol called **VMP (V MAX Protocol)**. Three deliverables are required: a protocol
 design PDF, working client/server source with full message/status logging, and a demo video. See
-`handoff-vmp-project.md` for full deliverable status and what remains.
+`docs/handoff-vmp-project.md` for full deliverable status and what remains.
 
 Three simulated sensor node types (`TempHumidNode`, `SoilNode`, `LightNode`) connect to a central TCP server,
 push readings periodically, and can receive commands back from the server over the same connection (hybrid
@@ -17,7 +17,7 @@ push/command model).
 
 Don't re-derive protocol rationale; it's already recorded:
 
-- `CONTEXT.md` — glossary of node types, all 5 VMP methods (+ 5 COMMAND subtypes), status codes, Node-ID/Plot-ID
+- `docs/CONTEXT.md` — glossary of node types, all 5 VMP methods (+ 5 COMMAND subtypes), status codes, Node-ID/Plot-ID
   naming convention, timestamp format.
 - `docs/adr/0001-tcp-only-transport.md` — why TCP-only, not TCP+UDP hybrid.
 - `docs/adr/0002-text-based-json-protocol.md` — why HTTP-inspired header + JSON body, not binary.
@@ -40,7 +40,7 @@ Don't re-derive protocol rationale; it's already recorded:
 - `docs/adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison table and the "จุดเด่น"
   (strengths) summary built from ADRs 0006–0010.
 
-If a protocol detail changes, update `CONTEXT.md`/the relevant ADR in the same change — don't let docs drift
+If a protocol detail changes, update `docs/CONTEXT.md`/the relevant ADR in the same change — don't let docs drift
 from code.
 
 ## Commands
@@ -118,7 +118,7 @@ requirement, not incidental; don't remove or quiet it.
 
 Touch, in order: `protocol/types.ts` (`CommandName`/`NodeType`/`NODE_TYPE_PREFIX`) → `server/repl.ts`
 (`buildCommandPayload` if it's a command) → `client/commands.ts` (`handleCommand` switch, or `client/sensors.ts`
-(`generateReading` switch) for a node type) → `CONTEXT.md` (glossary entry) → an ADR if the design choice needs
+(`generateReading` switch) for a node type) → `docs/CONTEXT.md` (glossary entry) → an ADR if the design choice needs
 justifying.
 
 ## Conventions worth preserving
@@ -127,4 +127,4 @@ justifying.
   strings elsewhere.
 - Node-ID prefixes must match `NODE_TYPE_PREFIX` (e.g. `TEMP-01` for `TempHumidNode`) — this is validated on
   `REGISTER` (400 if mismatched) and used elsewhere as the source of truth for the naming convention.
-- Timestamps in PUSH bodies are ISO 8601 with the Bangkok `+07:00` offset (see `CONTEXT.md`), not UTC `Z`.
+- Timestamps in PUSH bodies are ISO 8601 with the Bangkok `+07:00` offset (see `docs/CONTEXT.md`), not UTC `Z`.
