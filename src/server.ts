@@ -7,18 +7,28 @@ import {
   NodeType,
   NODE_TYPE_PREFIX,
   CommandName,
+  VMP_VERSION,
   encodeRequest,
   encodeResponse,
   formatForLog,
 } from './protocol';
 
+function getArg(flag: string): string | undefined {
+  const idx = process.argv.indexOf(flag);
+  return idx === -1 ? undefined : process.argv[idx + 1];
+}
+
 const PORT = Number(process.argv[2] ?? 4000);
+// Optional shared-secret auth (ADR 0008): if unset, REGISTER requires no Auth-Token at
+// all — fully backward-compatible with the original demo flow.
+const AUTH_SECRET = getArg('--secret');
 
 interface RegisteredNode {
   nodeId: string;
   nodeType: NodeType;
   plotId: string;
   socket: net.Socket;
+  lastSeq: number; // highest `Seq` seen on a PUSH from this node (ADR 0006); 0 = none yet
 }
 
 // Node-ID -> registration info. This is the server's connection table: it's how we find
@@ -37,6 +47,13 @@ function handleRegister(socket: net.Socket, req: ParsedRequest) {
   if (!nodeId || !nodeType || !plotId) {
     const res = encodeResponse(400, {}, { message: 'REGISTER requires Node-ID, Node-Type, Plot-ID headers' });
     socket.write(res);
+    return;
+  }
+
+  if (AUTH_SECRET !== undefined && req.headers['Auth-Token'] !== AUTH_SECRET) {
+    const res = encodeResponse(403, {}, { message: 'REGISTER requires a valid Auth-Token' });
+    socket.write(res);
+    log(nodeId, '->', parseBackForLog(res));
     return;
   }
 
@@ -124,6 +141,13 @@ const server = net.createServer((socket) => {
       if (msg.kind !== 'request') continue; // server only receives requests from nodes
       const nodeId = msg.headers['Node-ID'] ?? '?';
       log(nodeId, '<-', msg);
+
+      if (msg.version !== VMP_VERSION) {
+        const res = encodeResponse(400, {}, { message: `Unsupported protocol version: ${msg.version}` });
+        socket.write(res);
+        log(nodeId, '->', parseBackForLog(res));
+        continue;
+      }
 
       switch (msg.method) {
         case 'REGISTER':

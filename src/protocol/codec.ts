@@ -1,4 +1,4 @@
-// VMP (V MAX Protocol) — shared protocol implementation used by both server.ts and client.ts.
+// VMP (V MAX Protocol) — wire-format encode/decode. Types/constants live in `./types`.
 //
 // Wire format (see docs/adr/0002 and docs/adr/0004):
 //
@@ -18,54 +18,7 @@
 //     \n
 //     <N bytes of JSON body>
 
-export const VMP_VERSION = 'VMP/1.0';
-
-export type NodeType = 'TempHumidNode' | 'SoilNode' | 'LightNode';
-
-export const NODE_TYPE_PREFIX: Record<NodeType, string> = {
-  TempHumidNode: 'TEMP',
-  SoilNode: 'SOIL',
-  LightNode: 'LIGHT',
-};
-
-export type RequestMethod = 'REGISTER' | 'PUSH' | 'COMMAND' | 'STATUS' | 'UNREGISTER';
-
-export type CommandName =
-  | 'SET_INTERVAL'
-  | 'REPORT_NOW'
-  | 'SET_THRESHOLD'
-  | 'CALIBRATE'
-  | 'SHUTDOWN';
-
-export const STATUS_PHRASES: Record<number, string> = {
-  200: 'OK',
-  201: 'Registered',
-  400: 'BadRequest',
-  401: 'Unregistered',
-  403: 'Forbidden',
-  404: 'NodeNotFound',
-  409: 'DuplicateNode',
-  500: 'InternalError',
-};
-
-export interface ParsedRequest {
-  kind: 'request';
-  method: RequestMethod;
-  version: string;
-  headers: Record<string, string>;
-  body: Record<string, unknown>;
-}
-
-export interface ParsedResponse {
-  kind: 'response';
-  version: string;
-  statusCode: number;
-  statusPhrase: string;
-  headers: Record<string, string>;
-  body: Record<string, unknown>;
-}
-
-export type ParsedMessage = ParsedRequest | ParsedResponse;
+import { VMP_VERSION, STATUS_PHRASES, RequestMethod, ParsedMessage } from './types';
 
 /** Encode a request message (node -> server, or server -> node for COMMAND) into wire bytes. */
 export function encodeRequest(

@@ -23,6 +23,7 @@ const plotId = getArg('--plot');
 const host = getArg('--host') ?? 'localhost';
 const port = Number(getArg('--port') ?? 4000);
 let intervalSeconds = Number(getArg('--interval') ?? 5);
+const authToken = getArg('--token'); // ADR 0008: only needed if the server was started with --secret
 
 if (!nodeType || !nodeId || !plotId || !NODE_TYPE_PREFIX[nodeType]) {
   console.error('Usage: node client.js --type <TempHumidNode|SoilNode|LightNode> --id <Node-ID> --plot <Plot-ID> [--host h] [--port p] [--interval s]');
@@ -73,11 +74,13 @@ function fieldValue(reading: Record<string, unknown>, field: string): number | u
 
 const socket = net.connect(port, host, () => {
   console.log(`Connected to ${host}:${port} as ${nodeId} (${nodeType}, ${plotId})`);
-  const req = encodeRequest('REGISTER', {
+  const registerHeaders: Record<string, string> = {
     'Node-ID': nodeId!,
     'Node-Type': nodeType,
     'Plot-ID': plotId!,
-  });
+  };
+  if (authToken) registerHeaders['Auth-Token'] = authToken;
+  const req = encodeRequest('REGISTER', registerHeaders);
   socket.write(req);
   log('->', new MessageParser().push(req)[0]);
 });
@@ -100,7 +103,7 @@ socket.on('data', (chunk: Buffer | string) => {
 function handleResponse(msg: Extract<ParsedMessage, { kind: 'response' }>) {
   if (msg.statusCode === 201) {
     startPushing();
-  } else if (msg.statusCode === 409 || msg.statusCode === 400) {
+  } else if (msg.statusCode === 409 || msg.statusCode === 400 || msg.statusCode === 403) {
     console.error(`Registration failed, exiting.`);
     socket.end();
     process.exit(1);
