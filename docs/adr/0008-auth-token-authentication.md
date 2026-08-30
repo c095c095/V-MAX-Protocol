@@ -1,6 +1,8 @@
 # `Auth-Token` header แบบ shared-secret บน REGISTER แทน TLS เต็มรูปแบบ
 
-> **สถานะ**: ออกแบบแล้ว (ADR นี้), ยังไม่ implement ใน `src/*.ts`
+> **สถานะ**: Implement แล้วใน `src/server/auth.ts` + `src/server/handlers.ts` +
+> `src/client/index.ts` — ทดสอบผ่านแล้วทั้ง 3 เคส (ไม่มี token→403, token ผิด→403,
+> token ถูก→201)
 
 ปัจจุบัน VMP ไม่มีการยืนยันตัวตนใดๆ เลย — ใครก็ตามที่เปิด TCP connection มาที่ port
 ของ server แล้วส่ง REGISTER ที่ header ครบถ้วน (Node-ID/Node-Type/Plot-ID ที่ผ่าน

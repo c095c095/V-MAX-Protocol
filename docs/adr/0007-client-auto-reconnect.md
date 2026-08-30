@@ -1,6 +1,10 @@
 # Client auto-reconnect พร้อม exponential backoff เมื่อหลุดการเชื่อมต่อโดยไม่ตั้งใจ
 
-> **สถานะ**: ออกแบบแล้ว (ADR นี้), ยังไม่ implement ใน `src/*.ts`
+> **สถานะ**: Implement แล้วใน `src/client/connection.ts` — ทดสอบผ่านแล้วโดยการฆ่า
+> server process จริงระหว่าง client กำลังทำงาน ยืนยัน backoff เพิ่มเป็น 1s→2s→4s→8s
+> และ reconnect สำเร็จเมื่อ server กลับมา (พบและแก้บั๊กระหว่างทดสอบ: push-interval
+> timer เดิมไม่ถูก clear ตอนหลุด connection ทำให้ reconnect แล้วมี timer ซ้อนกันสอง
+> อัน — แก้โดยเพิ่ม callback `onDisconnect` ใน `connection.ts`)
 
 ปัจจุบัน `client.ts` เชื่อมต่อ TCP แบบครั้งเดียว (`net.connect(...)` ตอน module โหลด) —
 ถ้า connection หลุดไม่ว่าจะจากสาเหตุอะไร (`close` หรือ `error` event) โปรเซสจะ

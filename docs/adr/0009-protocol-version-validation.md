@@ -1,6 +1,8 @@
 # Validate `VMP/1.0` version token ที่ส่งมาทุกข้อความ แทนที่จะปล่อยผ่านเฉยๆ
 
-> **สถานะ**: ออกแบบแล้ว (ADR นี้), ยังไม่ implement ใน `src/*.ts`
+> **สถานะ**: Implement แล้วใน `src/server/index.ts` (dispatch loop ก่อนเข้า
+> `switch`) — type-check ผ่าน แต่ยังไม่เคยทดสอบ end-to-end กับ client จริงที่ส่ง
+> version ผิด เพราะ client อ้างอิง `VMP_VERSION` เดียวกันเสมอ
 
 ทุกข้อความของ VMP มี version token (`VMP/1.0`) อยู่ใน start line อยู่แล้วตั้งแต่
 ADR 0002 (รูปแบบ HTTP-inspired) — `MessageParser` (`protocol.ts`) ก็ parse เก็บค่านี้

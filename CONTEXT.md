@@ -38,10 +38,10 @@ Method ที่ node แจ้ง server ก่อนตัดการเช�
 **5xx**: `500 InternalError`
 
 > `403 Forbidden` และพฤติกรรมที่เกี่ยวข้องด้านล่าง (`Seq`, `Auth-Token`, version
-> validation, Plot-ID broadcast) ออกแบบไว้ใน `docs/adr/0006`–`0010` แต่**ยังไม่
-> implement** ใน `src/*.ts` ณ ตอนนี้ — ดูสถานะที่แน่นอนในแต่ละ ADR
+> validation, Plot-ID broadcast) ออกแบบไว้ใน `docs/adr/0006`–`0010` และ **implement
+> แล้ว** ใน `src/server/`, `src/client/`
 
-## VMP Headers เพิ่มเติม (ออกแบบไว้ใน ADR 0006–0010, ยังไม่ implement)
+## VMP Headers เพิ่มเติม (ADR 0006–0010)
 
 **Seq**:
 Header จำนวนเต็มบน PUSH/COMMAND เริ่มที่ `1` และ reset ทุกครั้งที่ REGISTER สำเร็จ/
@@ -56,7 +56,7 @@ server ตั้งไว้ ตอบกลับ `403 Forbidden` ถ้า ser
 
 **Version validation**:
 Server ตรวจสอบว่า start line ของทุก request มี version ตรงกับ `VMP/1.0`
-(`VMP_VERSION` ใน `protocol.ts`) หรือไม่ ถ้าไม่ตรง ตอบกลับ `400 BadRequest`
+(`VMP_VERSION` ใน `protocol/types.ts`) หรือไม่ ถ้าไม่ตรง ตอบกลับ `400 BadRequest`
 (`docs/adr/0009`)
 
 **Plot-ID เป็น COMMAND target ได้**:

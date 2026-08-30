@@ -1,6 +1,8 @@
 # เพิ่ม `Seq` header ใน PUSH/COMMAND เพื่อตรวจจับข้อความหาย/ซ้ำหลัง reconnect
 
-> **สถานะ**: ออกแบบแล้ว (ADR นี้), ยังไม่ implement ใน `src/*.ts`
+> **สถานะ**: Implement แล้วใน `src/server/handlers.ts` (`handlePush`) และ
+> `src/client/connection.ts`/`src/client/index.ts` — ทดสอบผ่านแล้ว (`Seq` reset
+> เป็น `1` ทุกครั้งที่ reconnect, ไล่เลขต่อเนื่องปกติเมื่อไม่มีข้อความหาย)
 
 TCP รับประกันว่าข้อความจะถึงครบและเรียงลำดับถูกต้อง **แต่รับประกันแค่ภายใน connection
 เดียว** เท่านั้น เมื่อ node หลุดการเชื่อมต่อแล้ว reconnect ใหม่ (ดู ADR 0007) connection

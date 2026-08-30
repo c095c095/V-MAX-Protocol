@@ -1,6 +1,8 @@
 # Operator REPL รองรับ `command <Plot-ID> ...` เพื่อ broadcast COMMAND ทั้งแปลง
 
-> **สถานะ**: ออกแบบแล้ว (ADR นี้), ยังไม่ implement ใน `src/*.ts`
+> **สถานะ**: Implement แล้วใน `src/server/repl.ts` — ทดสอบผ่านแล้วด้วย node 2 ตัว
+> (คนละ Node-Type) ใน Plot-ID เดียวกัน ยืนยันว่าทั้งคู่ได้รับ COMMAND เดียวกันและ log
+> แยกทีละ node ตามสเปก
 
 หนึ่งแปลง (Plot) มักมี node หลายประเภทพร้อมกัน (TempHumidNode/SoilNode/LightNode) ที่
 บ่อยครั้งต้องได้รับคำสั่งเดียวกันพร้อมกัน เช่น "ก่อนพายุเข้า ให้ทุก node ใน PLOT-01 ส่งค่า
