@@ -1,0 +1,646 @@
+<title>VMP Protocol Specification</title>
+<style>
+  :root {
+    --page: #f6f4ee;
+    --surface: #efece2;
+    --ink: #1b2430;
+    --ink-dim: #5b6472;
+    --accent: #2f6f4f;
+    --accent-ink: #ffffff;
+    --accent2: #a3661f;
+    --rule: #d8d3c4;
+    --code-bg: #eae6d9;
+    --code-ink: #2a2f22;
+    --ok: #2f6f4f;
+    --err: #a3392f;
+    --warn: #a3661f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #14181d;
+      --surface: #1a1f26;
+      --ink: #eae6da;
+      --ink-dim: #9aa3af;
+      --accent: #6fbf95;
+      --accent-ink: #0e1512;
+      --accent2: #d99a52;
+      --rule: #2a323c;
+      --code-bg: #1d232b;
+      --code-ink: #d9d6c8;
+      --ok: #6fbf95;
+      --err: #e08a80;
+      --warn: #d99a52;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #14181d;
+    --surface: #1a1f26;
+    --ink: #eae6da;
+    --ink-dim: #9aa3af;
+    --accent: #6fbf95;
+    --accent-ink: #0e1512;
+    --accent2: #d99a52;
+    --rule: #2a323c;
+    --code-bg: #1d232b;
+    --code-ink: #d9d6c8;
+    --ok: #6fbf95;
+    --err: #e08a80;
+    --warn: #d99a52;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  h1, h2, h3, .label, nav, .meta, th, .eyebrow {
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+  }
+  code, pre, .wire, table.codey td {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  h1, h2, h3 { text-wrap: balance; font-weight: 600; }
+
+  .sheet {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 120px;
+  }
+
+  header.title-block {
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 28px;
+    margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  h1.doctitle {
+    font-size: 34px;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 16px;
+    color: var(--ink-dim);
+    margin: 0 0 18px;
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+  .meta dt { font-weight: 600; color: var(--ink); }
+  .meta dd { margin: 0; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px 22px;
+    margin-bottom: 48px;
+    font-size: 13.5px;
+  }
+  nav.toc .label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+  }
+  nav.toc ol { columns: 2; column-gap: 28px; margin: 0; padding-left: 20px; }
+  nav.toc li { break-inside: avoid; margin-bottom: 5px; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+  section { margin-bottom: 46px; }
+  section h2 {
+    font-size: 21px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px;
+    margin: 0 0 16px;
+  }
+  section h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h3 {
+    font-size: 15.5px;
+    margin: 24px 0 10px;
+    color: var(--ink);
+  }
+  h3 .num { color: var(--ink-dim); font-weight: 500; }
+
+  p { margin: 0 0 14px; }
+  ul, ol.plain { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 5px; }
+  strong { font-weight: 600; }
+
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 4px 4px 0;
+    font-size: 14.5px;
+    margin: 16px 0;
+  }
+  .callout.warn { border-left-color: var(--warn); }
+
+  figure { margin: 20px 0; page-break-inside: avoid; }
+  figure figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-top: 6px;
+    text-align: center;
+  }
+  figure figcaption .tag {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  pre.wire {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre;
+  }
+  .wire .m { color: var(--accent2); font-weight: 600; }
+  .wire .s { color: var(--ok); font-weight: 600; }
+  .wire .e { color: var(--err); font-weight: 600; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 4px 0 18px;
+  }
+  .table-scroll { overflow-x: auto; }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+    border-bottom: 2px solid var(--ink);
+  }
+  td code, td.mono { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+
+  .badge {
+    display: inline-block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 3px;
+  }
+  .badge.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+  .badge.err { background: color-mix(in srgb, var(--err) 18%, transparent); color: var(--err); }
+  .badge.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .swatch {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px;
+    background: var(--surface);
+  }
+  .swatch .name { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-size: 13px; }
+  .swatch .desc { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+
+  .adr-tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1px 6px;
+    white-space: nowrap;
+  }
+
+  footer.doc-footer {
+    margin-top: 60px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-dim);
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+
+  .mermaid { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 12px; }
+
+  @media print {
+    :root { --page: #ffffff; --surface: #f4f2ea; --ink: #111; --ink-dim: #444; --rule: #ccc; --code-bg: #f0eee3; --code-ink: #111; }
+    body { font-size: 12.5px; }
+    .sheet { max-width: none; padding: 0; }
+    nav.toc { break-inside: avoid; }
+    section { break-inside: avoid-page; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="title-block">
+    <p class="eyebrow">Protocol Design Specification</p>
+    <h1 class="doctitle">VMP — V MAX Protocol</h1>
+    <p class="subtitle">An application-layer TCP protocol for a hybrid push/command IoT farm sensor network</p>
+    <dl class="meta">
+      <dt>Course</dt><dd>Networking — Project 1: Socket Programming</dd>
+      <dt>Transport</dt><dd>TCP, single persistent connection per node</dd>
+      <dt>Encoding</dt><dd>Text-based, HTTP-inspired header + JSON body</dd>
+      <dt>Version token</dt><dd><code>VMP/1.0</code></dd>
+    </dl>
+  </header>
+
+  <nav class="toc">
+    <span class="label">Contents</span>
+    <ol>
+      <li><a href="#s1">Overview &amp; purpose</a></li>
+      <li><a href="#s2">Why TCP, not UDP</a></li>
+      <li><a href="#s3">Message format</a></li>
+      <li><a href="#s4">Concurrency model</a></li>
+      <li><a href="#s5">Methods</a></li>
+      <li><a href="#s6">Status codes</a></li>
+      <li><a href="#s7">Reliability: Seq &amp; auto-reconnect</a></li>
+      <li><a href="#s8">Authentication</a></li>
+      <li><a href="#s9">Version negotiation</a></li>
+      <li><a href="#s10">Group addressing</a></li>
+      <li><a href="#s11">Naming conventions</a></li>
+      <li><a href="#s12">Comparison with MQTT / CoAP</a></li>
+      <li><a href="#s13">Deferred future work</a></li>
+    </ol>
+  </nav>
+
+  <section id="s1">
+    <h2><span class="num">1.</span> Overview &amp; purpose</h2>
+    <p>VMP (V MAX Protocol) is a custom application-layer protocol carrying telemetry and control
+      traffic for a simulated agricultural IoT sensor network. Sensor nodes distributed across
+      farm plots connect to one central server over TCP and operate in a <strong>hybrid</strong>
+      model: nodes push readings to the server on their own schedule, and the server can push
+      commands back to any node over that same connection at any time — there is no separate
+      polling channel and no message broker.</p>
+    <p>Three node types are modeled, each measuring a different physical quantity:</p>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="name">TempHumidNode</div><div class="desc">Air temperature (°C) + relative humidity (%), paired — modeled on a DHT22-class sensor.</div></div>
+      <div class="swatch"><div class="name">SoilNode</div><div class="desc">Soil pH and soil moisture (%).</div></div>
+      <div class="swatch"><div class="name">LightNode</div><div class="desc">Light intensity, in lux.</div></div>
+    </div>
+    <p>A node's lifecycle is: connect → <code>REGISTER</code> → periodic <code>PUSH</code> (and
+      an occasional self-check <code>STATUS</code>) → respond to any <code>COMMAND</code> the
+      server sends → <code>UNREGISTER</code> on a clean shutdown. Every message either side sends
+      or receives is printed to the console with its full status code and phrase, per the
+      assignment's logging requirement.</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="num">2.</span> Why TCP, not UDP</h2>
+    <p>IoT telemetry commonly favors UDP for its lower overhead, and a TCP+UDP hybrid (UDP for
+      node→server readings, TCP for server→node commands) was considered. VMP instead uses
+      <strong>TCP for the entire system</strong>, for three reasons:</p>
+    <ol class="plain">
+      <li>The assignment requires printing the status code/phrase of every message sent and
+        received. TCP guarantees in-order, complete delivery, so what gets logged always matches
+        what actually happened on the wire. UDP packet loss would make that log misleading without
+        extra bookkeeping.</li>
+      <li>Server→node commands (e.g. "increase push frequency") need reliable delivery — a lost
+        UDP datagram would leave a node silently misconfigured.</li>
+      <li>Sensor readings inform real irrigation/fertilization decisions in the domain being
+        modeled; losing them silently is undesirable.</li>
+    </ol>
+    <p>The TCP+UDP hybrid was rejected because it would double the socket-handling logic (two
+      transport types to manage per node) for a benefit — lower overhead — that matters far less
+      at this system's scale than the risk of a status/data mismatch in the required logs.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="num">3.</span> Message format</h2>
+    <p>Every VMP message is <strong>text-based</strong>: an HTTP-inspired start line, followed by
+      <code>Key: Value</code> headers, a blank line, and a JSON body whose exact byte length is
+      declared by a <code>Content-Length</code> header. This mirrors HTTP/1.1 framing directly —
+      material already covered in the course — rather than inventing a bespoke binary layout.</p>
+    <figure>
+      <pre class="wire"><span class="m">PUSH</span> VMP/1.0
+Node-ID: TEMP-01
+Seq: 4
+Content-Length: 78
+
+{"temperature":29.7,"humidity":63.8,"timestamp":"2026-08-30T14:30:00+07:00"}</pre>
+      <figcaption><span class="tag">Figure 3.1</span> — anatomy of a request message</figcaption>
+    </figure>
+    <p>Two design choices back this format:</p>
+    <ul>
+      <li><strong>JSON body, not a binary struct</strong> — the three node types carry different
+        fields (temperature+humidity vs. pH+moisture vs. lux). JSON lets each type send its own
+        shape without touching the header format. It is also directly human-readable in the
+        terminal log the assignment requires, and needs no hand-rolled byte-offset parsing.</li>
+      <li><strong><code>Content-Length</code> framing, not newline-delimited JSON</strong> — TCP is
+        a byte stream with no built-in message boundaries. Delimiting messages by <code>\n</code>
+        risks corruption if a JSON value ever contains a literal newline. Declaring the body's
+        exact byte length up front (as HTTP does) removes that ambiguity entirely: the receiver
+        reads headers until a blank line, reads exactly <code>Content-Length</code> bytes of body,
+        and is done — no scanning for a delimiter inside untrusted content.</li>
+    </ul>
+    <p>Responses use the same shape, with an HTTP-style status line in place of the method line:</p>
+    <pre class="wire">VMP/1.0 <span class="s">200 OK</span>
+Content-Length: 40
+
+{"message":"Push received successfully"}</pre>
+  </section>
+
+  <section id="s4">
+    <h2><span class="num">4.</span> Concurrency model</h2>
+    <p>The server must hold many nodes' connections open simultaneously — each REGISTERed node
+      keeps its socket alive so the server can push a <code>COMMAND</code> to it at any later
+      time — without one slow or idle connection blocking any other. VMP's reference server relies
+      on <strong>Node.js's own event-driven, single-threaded I/O model</strong> rather than
+      spawning one thread per connection: each incoming connection yields its own <code>socket</code>
+      object via <code>server.on('connection', ...)</code>, and every REGISTERed node's identity is
+      mapped to that socket in a server-side connection table (<code>Map&lt;Node-ID,
+      RegisteredNode&gt;</code>), so the server can look up any node's live socket later to deliver
+      a <code>COMMAND</code>. This is idiomatic for the runtime, requires no manual thread
+      lifecycle management, and Node's event loop already multiplexes the concurrent, I/O-bound
+      socket traffic this workload consists of.</p>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">5.</span> Methods</h2>
+    <p>VMP defines five methods. <code>REGISTER</code>, <code>PUSH</code>, and <code>STATUS</code>
+      are node→server; <code>COMMAND</code> is server→node; <code>UNREGISTER</code> is node→server.</p>
+
+    <h3><span class="num">5.1</span> REGISTER — introduce a node</h3>
+    <p>Sent once, immediately after connecting, before any <code>PUSH</code> is allowed. Carries
+      <code>Node-ID</code>, <code>Node-Type</code>, and <code>Plot-ID</code>, and optionally an
+      <code>Auth-Token</code> (§8). A successful REGISTER binds the node's identity to this TCP
+      connection in the server's connection table for the lifetime of the socket.</p>
+
+    <h3><span class="num">5.2</span> PUSH — report a reading</h3>
+    <p>Sent periodically, node-initiated, carrying a <code>Seq</code> header (§7) and a JSON body
+      shaped by the node's type. Only accepted for a node that has already REGISTERed on this
+      connection.</p>
+
+    <h3><span class="num">5.3</span> COMMAND — instruct a node</h3>
+    <p>Server-initiated, sent over the node's existing REGISTERed connection. Five subtypes:</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Subtype</th><th>Effect</th><th>Payload</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">SET_INTERVAL</td><td>Change how often the node pushes readings.</td><td class="mono">{"seconds": n}</td></tr>
+        <tr><td class="mono">REPORT_NOW</td><td>Ask the node to push its latest reading immediately, out of cycle.</td><td class="mono">{}</td></tr>
+        <tr><td class="mono">SET_THRESHOLD</td><td>Ask the node to push early whenever a given field crosses a minimum (e.g. soil moisture too low).</td><td class="mono">{"field": s, "min": n}</td></tr>
+        <tr><td class="mono">CALIBRATE</td><td>Adjust the node's sensor reading offset.</td><td class="mono">{"offset": n}</td></tr>
+        <tr><td class="mono">SHUTDOWN</td><td>Tell the node to UNREGISTER and disconnect.</td><td class="mono">{}</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>An operator REPL on the server lets a human send any of these interactively, targeting
+      either a single <code>Node-ID</code> or an entire <code>Plot-ID</code> (§10).</p>
+
+    <h3><span class="num">5.4</span> STATUS — self-check</h3>
+    <p>Empty-bodied request carrying only <code>Node-ID</code>; the server answers whether that
+      node is still present in its connection table (<code>200</code> +
+      <code>{"registered":true}</code>) or not (<code>401</code>). The reference client sends one
+      automatically every 3rd <code>PUSH</code> as a lightweight self-check, piggybacked on the
+      existing push cadence rather than a new timer.</p>
+
+    <h3><span class="num">5.5</span> UNREGISTER — leave cleanly</h3>
+    <p>Empty-bodied, node-initiated. The server removes the node from its connection table,
+      answers <code>200</code>, and closes the socket. Sent on an intentional disconnect (Ctrl+C,
+      or a <code>SHUTDOWN</code> command) — never on an unintentional one, which the server instead
+      detects via the socket's own <code>close</code>/error event.</p>
+
+    <figure>
+      <pre class="mermaid">sequenceDiagram
+    participant N as Sensor Node
+    participant S as VMP Server
+    N->>S: REGISTER (Node-ID, Node-Type, Plot-ID)
+    S-->>N: 201 Registered
+    loop every interval
+        N->>S: PUSH (Seq, reading)
+        S-->>N: 200 OK
+    end
+    N->>S: STATUS (every 3rd PUSH)
+    S-->>N: 200 OK {registered:true}
+    S->>N: COMMAND (e.g. SET_INTERVAL)
+    N-->>S: 200 OK
+    N->>S: UNREGISTER
+    S-->>N: 200 OK
+    S--xN: connection closed</pre>
+      <figcaption><span class="tag">Figure 5.1</span> — full session lifecycle, happy path</figcaption>
+    </figure>
+
+    <figure>
+      <pre class="mermaid">sequenceDiagram
+    participant N as Sensor Node
+    participant S as VMP Server
+    N->>S: REGISTER (Node-ID mismatched prefix)
+    S-->>N: 400 BadRequest
+    N->>S: REGISTER (wrong/missing Auth-Token)
+    S-->>N: 403 Forbidden
+    N->>S: REGISTER (Node-ID already registered)
+    S-->>N: 409 DuplicateNode
+    N->>S: PUSH (not yet registered)
+    S-->>N: 401 Unregistered</pre>
+      <figcaption><span class="tag">Figure 5.2</span> — the 4xx error paths</figcaption>
+    </figure>
+  </section>
+
+  <section id="s6">
+    <h2><span class="num">6.</span> Status codes</h2>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Code</th><th>Phrase</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge ok">200</span></td><td class="mono">OK</td><td>Generic success (PUSH accepted, COMMAND acknowledged, STATUS confirmed, UNREGISTER completed).</td></tr>
+        <tr><td><span class="badge ok">201</span></td><td class="mono">Registered</td><td>REGISTER accepted; the node is now bound to this connection.</td></tr>
+        <tr><td><span class="badge err">400</span></td><td class="mono">BadRequest</td><td>Missing REGISTER headers, a Node-ID/Node-Type prefix mismatch, or an unsupported <code>VMP/x.x</code> version token (§9).</td></tr>
+        <tr><td><span class="badge err">401</span></td><td class="mono">Unregistered</td><td>PUSH or STATUS from a Node-ID not present in the server's connection table.</td></tr>
+        <tr><td><span class="badge err">403</span></td><td class="mono">Forbidden</td><td>REGISTER with a missing or incorrect <code>Auth-Token</code> on a secret-protected server (§8).</td></tr>
+        <tr><td><span class="badge err">404</span></td><td class="mono">NodeNotFound</td><td>Reserved for a target reference to a Node-ID the server does not know.</td></tr>
+        <tr><td><span class="badge err">409</span></td><td class="mono">DuplicateNode</td><td>REGISTER with a Node-ID that is already registered on another connection.</td></tr>
+        <tr><td><span class="badge warn">500</span></td><td class="mono">InternalError</td><td>Reserved for an unexpected server-side failure.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="num">7.</span> Reliability: <code>Seq</code> &amp; auto-reconnect <span class="adr-tag">ADR 0006 / 0007</span></h2>
+    <p>TCP guarantees ordered, complete delivery <strong>within one connection</strong> — not
+      across a reconnect. If a node's connection drops and it reconnects, the new connection has no
+      memory of the old one; any reading in flight during the drop is simply gone, and neither side
+      would otherwise know. Two features address this directly:</p>
+    <ul>
+      <li><strong><code>Seq</code> header</strong> — an integer on every <code>PUSH</code>,
+        starting at 1 and resetting to 1 on every fresh REGISTER (including after a reconnect). The
+        server tracks the last <code>Seq</code> it saw per node; a jump ahead logs a likely gap, a
+        repeat or a value at/below the last one logs a duplicate. This is <strong>detection and
+        logging, not a retransmission layer</strong> — the server still processes and answers
+        <code>200</code> regardless, deliberately staying inside the scope of what this
+        assignment's logging requirement calls for.</li>
+      <li><strong>Auto-reconnect with exponential backoff</strong> — an unintentional disconnect
+        (socket <code>close</code>/<code>error</code>, as opposed to a deliberate UNREGISTER) no
+        longer exits the client process. It retries the connection at 1s, 2s, 4s, 8s… up to a cap,
+        resetting back to 1s once REGISTER succeeds again — realistic for a field sensor recovering
+        from a transient network blip, and it avoids a reconnect storm if the server is down for a
+        while.</li>
+      <li><strong>SIGINT / <code>SHUTDOWN</code></strong> are treated as intentional: the client
+        marks the disconnect as intentional and sends UNREGISTER first, so the reconnect logic
+        never fires for a deliberate exit.</li>
+    </ul>
+    <div class="callout">Because both sides reset their sequence counters together on every fresh
+      REGISTER, a genuine mid-stream gap cannot occur under normal operation — the detector's real
+      job is catching a malformed or adversarial client, the same category as version validation
+      (§9). This is a property of the design, not a bug: any anomaly detector is only exercised by
+      deliberately bad input.</div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="num">8.</span> Authentication <span class="adr-tag">ADR 0008</span></h2>
+    <p>By default VMP has no authentication — any client sending a well-formed REGISTER is
+      accepted. An optional shared-secret layer closes that gap without requiring certificate
+      management: the server may be started with <code>--secret &lt;token&gt;</code>; when set,
+      REGISTER must carry a matching <code>Auth-Token</code> header or the server answers
+      <code>403 Forbidden</code>. Omitting <code>--secret</code> disables the check entirely,
+      keeping the protocol backward-compatible with an unsecured deployment. Full TLS was
+      considered and deliberately deferred (§13) — it would add real confidentiality, but at the
+      cost of certificate/key setup that is a poor risk trade against the time remaining for the
+      other two deliverables.</p>
+  </section>
+
+  <section id="s9">
+    <h2><span class="num">9.</span> Version negotiation <span class="adr-tag">ADR 0009</span></h2>
+    <p>Every start line has always carried a version token (<code>VMP/1.0</code>), but it went
+      unchecked — any client, regardless of what it sent, was processed identically. The server now
+      validates it on every request, before dispatch: a mismatch is rejected with
+      <code>400 BadRequest</code> rather than being parsed as if it matched. This turns the
+      HTTP-inspired version token from decoration into an actual compatibility gate, and gives a
+      future <code>VMP/2.0</code> wire-format change a clean way to reject an incompatible older
+      client instead of failing unpredictably mid-parse.</p>
+  </section>
+
+  <section id="s10">
+    <h2><span class="num">10.</span> Group addressing <span class="adr-tag">ADR 0010</span></h2>
+    <p>A single plot commonly hosts multiple node types that need the same instruction at once
+      (e.g. "before the storm, every node in PLOT-01 should push more frequently"). The operator
+      REPL's <code>command &lt;target&gt; …</code> accepts either a <code>Node-ID</code> (unchanged
+      behavior) or a <code>Plot-ID</code>, which fans the same <code>COMMAND</code> out to every
+      node currently registered in that plot — logged once per node, so the assignment's
+      per-message logging requirement still holds for each individual delivery. This reaches the
+      same practical outcome as MQTT's topic-based group addressing (§12), without introducing a
+      broker: the server already tracks each node's <code>Plot-ID</code> in its connection table.</p>
+  </section>
+
+  <section id="s11">
+    <h2><span class="num">11.</span> Naming conventions</h2>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Name</th><th>Format</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Plot-ID</td><td class="mono">PLOT-{2 digits}</td><td class="mono">PLOT-01</td></tr>
+        <tr><td>Node-ID</td><td class="mono">{TYPE-PREFIX}-{2 digits}</td><td class="mono">TEMP-01 / SOIL-01 / LIGHT-01</td></tr>
+        <tr><td>Timestamp (PUSH body)</td><td>ISO 8601 with Bangkok offset</td><td class="mono">2026-08-30T14:30:00+07:00</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>A node's declared <code>Node-Type</code> must produce a <code>Node-ID</code> starting with
+      that type's prefix (<code>TEMP-</code>, <code>SOIL-</code>, <code>LIGHT-</code>); a mismatch
+      is rejected at REGISTER with <code>400 BadRequest</code>.</p>
+  </section>
+
+  <section id="s12">
+    <h2><span class="num">12.</span> Comparison with MQTT / CoAP <span class="adr-tag">ADR 0011</span></h2>
+    <p>VMP is not a bid to replace MQTT or CoAP in production — it is purpose-built for this
+      assignment's specific constraints (hybrid push+command on one TCP connection, mandatory
+      human-readable per-message logging, three node types with different fields). MQTT and CoAP
+      are still the most relevant comparison points, since both target the same problem — sensor
+      telemetry to a central point, with control flowing back.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Axis</th><th>VMP</th><th>MQTT</th><th>CoAP</th></tr></thead>
+      <tbody>
+        <tr><td>Transport</td><td>TCP; <code>Seq</code>-based gap/duplicate detection; auto-reconnect with backoff</td><td>TCP + configurable QoS 0/1/2</td><td>UDP; reliability is CoAP's own job via Confirmable messages</td></tr>
+        <tr><td>Encoding</td><td>Text, HTTP-style header + JSON body</td><td>Binary, 2-byte minimum fixed header</td><td>Binary, 4-byte fixed header, often CBOR/SenML payload</td></tr>
+        <tr><td>Framing</td><td><code>Content-Length</code> (HTTP-style)</td><td>Binary variable-length Remaining-Length field</td><td>One UDP datagram = one message</td></tr>
+        <tr><td>Comm. model</td><td>Hybrid push+command, one connection, no broker; Plot-ID group addressing</td><td>Pub/sub via a central broker and topic hierarchy</td><td>REST-style request/response; server push only via the Observe extension</td></tr>
+        <tr><td>Identity / session</td><td>Node-ID bound to socket server-side; version check; optional shared-secret auth</td><td>Client-ID + broker-held session state; built-in username/password</td><td>Stateless; request/response paired by a per-exchange Token</td></tr>
+        <tr><td>Schema flexibility</td><td>JSON body shape varies freely per node type</td><td>Opaque payload — schema is an application-layer convention</td><td>Opaque payload — same as MQTT</td></tr>
+        <tr><td>Human-readability</td><td>Reads directly off a terminal log, no decoder</td><td>Binary — needs a dissector/CLI tool</td><td>Binary — needs a dissector/CLI tool</td></tr>
+        <tr><td>Footprint</td><td>Heaviest of the three — JSON + text headers</td><td>Small, built for constrained/battery devices</td><td>Smallest — designed for 6LoWPAN-class devices</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><strong>Where VMP trades away efficiency, it does so deliberately.</strong> The assignment
+      requires printing every message and status code in human-readable form; a binary protocol
+      would need a decoder written purely to satisfy that logging requirement, with no other
+      benefit at this scale. The system also has no need for MQTT's broker (a handful of
+      simulated nodes on one machine, not a large decoupled deployment) or CoAP's 6LoWPAN-class
+      footprint optimization (nodes here are ordinary processes, not memory-constrained
+      microcontrollers).</p>
+    <h3>Strengths specific to VMP</h3>
+    <ul>
+      <li><strong>Loss/duplicate detection across a reconnect</strong> (§7), paired with automatic
+        reconnection — MQTT leans on broker-managed QoS levels to get this; CoAP leans on
+        Confirmable messages. VMP gets it without a broker or a transport change.</li>
+      <li><strong>Built-in optional authentication</strong> (§8) that costs nothing when unused.</li>
+      <li><strong>A version token that is actually enforced</strong> (§9), not just present.</li>
+      <li><strong>Group addressing without a broker</strong> (§10) — CoAP has no native equivalent
+        at all; MQTT gets it from infrastructure VMP doesn't need to add.</li>
+      <li><strong>Zero-decoder debuggability</strong> — every message is legible straight from the
+        log the assignment already requires.</li>
+    </ul>
+  </section>
+
+  <section id="s13">
+    <h2><span class="num">13.</span> Deferred future work</h2>
+    <p>Considered, and consciously scoped out of this submission as disproportionate to the time
+      available relative to their benefit:</p>
+    <ul>
+      <li><strong>Full session resumption</strong> — a server-issued session token letting a node
+        resume state after reconnecting instead of REGISTERing from scratch.</li>
+      <li><strong>Message-ID + dedupe</strong> — a unique ID per message with server-side dedupe;
+        overlaps substantially with what <code>Seq</code> (§7) already catches.</li>
+      <li><strong>Batch PUSH</strong> — multiple readings per message to cut overhead at short
+        intervals; not needed at this project's node counts.</li>
+      <li><strong>TLS</strong> — real transport encryption in place of the shared-secret header
+        (§8); deferred over certificate/key setup risk during grading.</li>
+    </ul>
+  </section>
+
+  <footer class="doc-footer">
+    VMP — V MAX Protocol · Protocol Design Specification · Project 1, Socket Programming
+  </footer>
+
+</div>
