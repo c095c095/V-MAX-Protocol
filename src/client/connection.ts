@@ -4,7 +4,8 @@
 // raw socket reference.
 
 import * as net from 'net';
-import { MessageParser, ParsedMessage } from '../protocol/codec';
+import { MessageParser } from '../protocol/codec';
+import { ParsedMessage } from '../protocol/types';
 
 export interface ConnectOptions {
   host: string;

@@ -6,8 +6,8 @@
 // receiving `201`. Connection lifecycle (including auto-reconnect, ADR 0007) lives in
 // `connection.ts`; reading generation lives in `sensors.ts`; COMMAND handling in `commands.ts`.
 
-import { MessageParser, ParsedMessage, encodeRequest, formatForLog } from '../protocol/codec';
-import { NodeType, NODE_TYPE_PREFIX } from '../protocol/types';
+import { MessageParser, encodeRequest, formatForLog } from '../protocol/codec';
+import { NodeType, NODE_TYPE_PREFIX, ParsedMessage } from '../protocol/types';
 import * as connection from './connection';
 import { ClientState, generateReading, fieldValue } from './sensors';
 import { handleCommand } from './commands';
