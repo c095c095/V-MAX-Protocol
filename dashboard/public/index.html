@@ -4,98 +4,101 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VMP Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header>
-    <h1>VMP Dashboard</h1>
-    <p class="subtitle">Demo aid for V MAX Protocol - spawns the real server/client processes. Not a graded deliverable.</p>
+<body class="m-0 bg-slate-900 text-slate-100 font-sans">
+  <header class="p-4 px-6 border-b border-slate-700">
+    <h1 class="m-0 mb-1 text-xl font-semibold">VMP Dashboard</h1>
+    <p class="m-0 text-slate-400 text-sm">Demo aid for V MAX Protocol - spawns the real server/client processes. Not a graded deliverable.</p>
   </header>
 
-  <details class="tips" open>
-    <summary>Demo tips / coverage notes</summary>
-    <ul>
-      <li><strong>Auto-reconnect (ADR 0007):</strong> kill a server while a client targeting it
-        is still running, then create a new server on the same port — the client's log will show
+  <details class="mt-3 mx-6 bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs text-slate-400" open>
+    <summary class="cursor-pointer text-slate-100 font-semibold text-sm">Demo tips / coverage notes</summary>
+    <ul class="mt-2 pl-5 list-disc">
+      <li class="mb-1.5 leading-relaxed"><strong class="text-slate-100">Auto-reconnect (ADR 0007):</strong> kill a server while a client targeting it
+        is still running, then click <strong class="text-slate-100">Start</strong> on that same server card — the client's log will show
         reconnect attempts with growing backoff (1s &rarr; 2s &rarr; 4s &rarr; ...) until it
         re-registers.</li>
-      <li><strong>Not demoable from this dashboard:</strong> protocol version validation
-        (ADR 0009) and <code>Seq</code> gap/duplicate detection (ADR 0006) both require
-        hand-crafted wire bytes that no client spawned here ever sends. See
-        <code>tests/integration.test.ts</code> or <code>docs/adr/0006</code>/<code>0009</code>
+      <li class="mb-1.5 leading-relaxed"><strong class="text-slate-100">Not demoable from this dashboard:</strong> protocol version validation
+        (ADR 0009), <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">Seq</code> gap/duplicate detection (ADR 0006), and the
+        <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">401</code> branches of PUSH/STATUS for an unregistered node
+        (<code class="bg-slate-700 rounded px-1 py-0.5 font-mono">handlers.ts</code>) — all four require hand-crafted wire bytes,
+        since the reference client only ever sends PUSH/STATUS after a successful REGISTER. See
+        <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">tests/integration.test.ts</code> or
+        <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">docs/adr/0006</code>/<code class="bg-slate-700 rounded px-1 py-0.5 font-mono">0009</code>
         to see them exercised.</li>
-      <li><strong>STATUS method:</strong> every client now self-checks via <code>STATUS</code>
-        every 3rd <code>PUSH</code> (ADR 0012) — watch any client's log for a few pushes to see
-        it appear, answered <code>200</code>/<code>registered:true</code> under normal
+      <li class="mb-1.5 leading-relaxed"><strong class="text-slate-100">STATUS method:</strong> every client now self-checks via <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">STATUS</code>
+        every 3rd <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">PUSH</code> (ADR 0012) — watch any client's log for a few pushes to see
+        it appear, answered <code class="bg-slate-700 rounded px-1 py-0.5 font-mono">200</code>/<code class="bg-slate-700 rounded px-1 py-0.5 font-mono">registered:true</code> under normal
         operation.</li>
     </ul>
   </details>
 
-  <main class="columns">
-    <section class="column" id="servers-column">
-      <h2>Servers</h2>
+  <main class="grid grid-cols-2 gap-4 p-4 px-6 items-start">
+    <section class="min-w-0" id="servers-column">
+      <h2 class="text-sm uppercase tracking-wide text-slate-400 mb-2 font-semibold">Servers</h2>
 
-      <form id="server-create-form" class="create-form">
-        <label>
+      <form id="server-create-form" class="grid grid-cols-2 gap-2 bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4">
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Port
-          <input type="number" id="server-port" required />
+          <input type="number" id="server-port" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
-          Secret <span class="hint">(optional — enables Auth-Token)</span>
-          <input type="text" id="server-secret" placeholder="leave blank to disable auth" />
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
+          Secret <span class="text-slate-400 font-normal text-[11px]">(optional — enables Auth-Token)</span>
+          <input type="text" id="server-secret" placeholder="leave blank to disable auth" class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <button type="submit">Create Server</button>
+        <button type="submit" class="col-span-2 bg-blue-500 text-slate-900 rounded px-2 py-2 font-semibold cursor-pointer hover:brightness-110">Create Server</button>
       </form>
 
-      <div id="server-list" class="card-list"></div>
+      <div id="server-list" class="flex flex-col gap-3"></div>
     </section>
 
-    <section class="column" id="clients-column">
-      <h2>Clients</h2>
+    <section class="min-w-0" id="clients-column">
+      <h2 class="text-sm uppercase tracking-wide text-slate-400 mb-2 font-semibold">Clients</h2>
 
-      <form id="client-create-form" class="create-form">
-        <label>
+      <form id="client-create-form" class="grid grid-cols-2 gap-2 bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4">
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Node Type
-          <select id="client-type">
+          <select id="client-type" class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm">
             <option value="TempHumidNode">TempHumidNode (prefix TEMP-)</option>
             <option value="SoilNode">SoilNode (prefix SOIL-)</option>
             <option value="LightNode">LightNode (prefix LIGHT-)</option>
           </select>
         </label>
-        <label>
-          Node-ID <span class="hint">(e.g. TEMP-01 — free text, mismatches will 400)</span>
-          <input type="text" id="client-id" placeholder="TEMP-01" required />
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
+          Node-ID <span class="text-slate-400 font-normal text-[11px]">(e.g. TEMP-01 — free text, mismatches will 400)</span>
+          <input type="text" id="client-id" placeholder="TEMP-01" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Plot-ID
-          <input type="text" id="client-plot" placeholder="PLOT-01" required />
+          <input type="text" id="client-plot" placeholder="PLOT-01" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Target server
-          <select id="client-target-server">
+          <select id="client-target-server" class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm">
             <option value="">— manual host/port below —</option>
           </select>
         </label>
-        <label>
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Host
-          <input type="text" id="client-host" value="127.0.0.1" required />
+          <input type="text" id="client-host" value="127.0.0.1" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Port
-          <input type="number" id="client-port" required />
+          <input type="number" id="client-port" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
           Interval (s)
-          <input type="number" id="client-interval" value="5" min="1" required />
+          <input type="number" id="client-interval" value="5" min="1" required class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <label>
-          Token <span class="hint">(only if target server has a secret)</span>
-          <input type="text" id="client-token" placeholder="leave blank if unsecured" />
+        <label class="flex flex-col gap-1 text-xs text-slate-400">
+          Token <span class="text-slate-400 font-normal text-[11px]">(only if target server has a secret)</span>
+          <input type="text" id="client-token" placeholder="leave blank if unsecured" class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1.5 text-sm" />
         </label>
-        <button type="submit">Create Client</button>
+        <button type="submit" class="col-span-2 bg-blue-500 text-slate-900 rounded px-2 py-2 font-semibold cursor-pointer hover:brightness-110">Create Client</button>
       </form>
 
-      <div id="client-list" class="card-list"></div>
+      <div id="client-list" class="flex flex-col gap-3"></div>
     </section>
   </main>
 

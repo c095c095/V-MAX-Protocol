@@ -1,5 +1,9 @@
 // VMP Dashboard frontend — plain JS, no build step, no framework. Talks to dashboard/server.ts
-// over Socket.IO (served automatically at /socket.io/socket.io.js).
+// over Socket.IO (served automatically at /socket.io/socket.io.js). Styling is Tailwind (Play
+// CDN, loaded in index.html) — utility classes are attached directly to elements here instead of
+// a separate stylesheet; a handful of plain class names (card, card-title, card-actions,
+// node-chips, command-form, log-panel) are kept purely as querySelector hooks and carry no CSS
+// meaning of their own.
 
 const socket = io();
 
@@ -18,24 +22,48 @@ const clientCards = new Map(); // id -> { el, titleEl, actionsEl, logEl }
 let latestServers = [];
 let suggestedPort = 4001;
 
-// ---- log-line classification (re-parses the exact text formatForLog already produces) ----
+const BADGE_BASE = 'inline-block px-1.5 py-0.5 rounded-full text-[11px] ml-1.5';
+const STATUS_BADGE = {
+  running: 'bg-emerald-400/20 text-emerald-400',
+  starting: 'bg-amber-400/20 text-amber-400',
+  stopped: 'bg-slate-400/20 text-slate-400',
+  error: 'bg-red-400/20 text-red-400',
+};
+const BTN_BASE = 'bg-slate-700 border border-slate-600 text-slate-100 rounded px-2.5 py-1 text-xs cursor-pointer ml-1.5 hover:brightness-125';
+const BTN_VARIANT = {
+  kill: 'text-red-400 border-red-400',
+  stop: 'text-amber-400 border-amber-400',
+  start: 'text-emerald-400 border-emerald-400',
+};
+
+// ---- log-line classification (re-parses the exact text formatForLog already produces),
+// returning Tailwind text-color utility classes directly. ----
 function classifyLine(line) {
   const respMatch = line.match(/VMP\/[\d.]+ (\d{3}) \w+/);
   if (respMatch) {
-    return Number(respMatch[1]) < 300 ? 'ok' : 'err';
+    return Number(respMatch[1]) < 300 ? 'text-emerald-400' : 'text-red-400';
   }
   const reqMatch = line.match(/\b(REGISTER|PUSH|COMMAND|STATUS|UNREGISTER)\b VMP\/[\d.]+/);
-  if (reqMatch) return `method-${reqMatch[1]}`;
-  if (/-> COMMAND /.test(line)) return 'method-COMMAND';
-  if (/seq gap|duplicate\/replayed/i.test(line)) return 'warn';
-  if (/reconnecting|Connection lost/i.test(line)) return 'warn';
-  if (/removed node|socket error|ECONNRESET|Forbidden|spawn error/i.test(line)) return 'err';
-  return 'dim';
+  if (reqMatch) {
+    const methodColor = {
+      REGISTER: 'text-blue-400',
+      PUSH: 'text-purple-400',
+      COMMAND: 'text-pink-400',
+      STATUS: 'text-sky-400',
+      UNREGISTER: 'text-slate-400',
+    };
+    return methodColor[reqMatch[1]];
+  }
+  if (/-> COMMAND /.test(line)) return 'text-pink-400';
+  if (/seq gap|duplicate\/replayed/i.test(line)) return 'text-amber-400';
+  if (/reconnecting|Connection lost/i.test(line)) return 'text-amber-400';
+  if (/removed node|socket error|ECONNRESET|Forbidden|spawn error/i.test(line)) return 'text-red-400';
+  return 'text-slate-400';
 }
 
 function appendLogLine(container, line) {
   const div = document.createElement('div');
-  div.className = `log-line ${classifyLine(line)}`;
+  div.className = `whitespace-pre-wrap break-all ${classifyLine(line)}`;
   div.textContent = line;
   container.appendChild(div);
   while (container.childElementCount > 1000) container.removeChild(container.firstChild);
@@ -70,26 +98,28 @@ function ensureServerCard(id) {
   let card = serverCards.get(id);
   if (!card) {
     const el = document.createElement('div');
-    el.className = 'card';
+    el.className = 'card bg-slate-800 border border-slate-700 rounded-lg p-3';
     el.innerHTML = `
-      <div class="card-header">
-        <span class="card-title"></span>
+      <div class="card-header flex justify-between items-center mb-2 gap-2 flex-wrap">
+        <span class="card-title font-semibold text-sm"></span>
         <div class="card-actions"></div>
       </div>
-      <div class="node-chips"></div>
-      <form class="command-form">
-        <input name="targetId" placeholder="Node-ID or Plot-ID" required />
-        <select name="subtype">
+      <div class="node-chips flex flex-wrap gap-1.5 mb-2"></div>
+      <form class="command-form flex gap-1.5 mb-2 flex-wrap">
+        <input name="targetId" placeholder="Node-ID or Plot-ID" required
+          class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-1.5 py-1 text-xs w-[100px]" />
+        <select name="subtype" class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-1.5 py-1 text-xs">
           <option value="SET_INTERVAL">SET_INTERVAL</option>
           <option value="REPORT_NOW">REPORT_NOW</option>
           <option value="SET_THRESHOLD">SET_THRESHOLD</option>
           <option value="CALIBRATE">CALIBRATE</option>
           <option value="SHUTDOWN">SHUTDOWN</option>
         </select>
-        <input name="args" placeholder="args, e.g. 10  or  temperature 20" />
-        <button type="submit">Send</button>
+        <input name="args" placeholder="args, e.g. 10  or  temperature 20"
+          class="bg-slate-700 border border-slate-600 text-slate-100 rounded px-1.5 py-1 text-xs flex-1 min-w-[80px] disabled:opacity-50 disabled:cursor-not-allowed" />
+        <button type="submit" class="bg-blue-500 text-slate-900 rounded px-2.5 py-1 text-xs cursor-pointer hover:brightness-110">Send</button>
       </form>
-      <div class="log-panel"></div>
+      <div class="log-panel bg-slate-950 border border-slate-700 rounded-md p-2 h-[180px] min-h-[100px] max-h-[60vh] resize-y overflow-y-auto font-mono text-[11px] leading-relaxed"></div>
     `;
     serverListEl.appendChild(el);
     card = {
@@ -125,24 +155,25 @@ function renderServers(list) {
     seen.add(server.id);
     const card = ensureServerCard(server.id);
     card.titleEl.innerHTML = `Server :${server.port}
-      <span class="badge status-${server.status}">${server.status}</span>
-      ${server.secured ? '<span class="badge secured">secured</span>' : ''}`;
+      <span class="${BADGE_BASE} ${STATUS_BADGE[server.status]}">${server.status}</span>
+      ${server.secured ? `<span class="${BADGE_BASE} bg-blue-400/20 text-blue-400">secured</span>` : ''}`;
 
     card.actionsEl.innerHTML = '';
     if (server.status === 'running' || server.status === 'starting') {
       const killBtn = document.createElement('button');
-      killBtn.className = 'kill';
+      killBtn.className = `${BTN_BASE} ${BTN_VARIANT.kill}`;
       killBtn.textContent = 'Kill';
       killBtn.onclick = () => socket.emit('server:kill', { id: server.id });
       card.actionsEl.appendChild(killBtn);
     } else {
       const startBtn = document.createElement('button');
-      startBtn.className = 'start';
+      startBtn.className = `${BTN_BASE} ${BTN_VARIANT.start}`;
       startBtn.textContent = 'Start';
       startBtn.title = 'Respawn on the same port' + (server.secured ? ' with the same secret' : '');
       startBtn.onclick = () => socket.emit('server:start', { id: server.id });
 
       const removeBtn = document.createElement('button');
+      removeBtn.className = BTN_BASE;
       removeBtn.textContent = 'Remove';
       removeBtn.onclick = () => socket.emit('server:remove', { id: server.id });
 
@@ -152,7 +183,7 @@ function renderServers(list) {
     card.nodesEl.innerHTML = '';
     for (const node of server.nodes) {
       const chip = document.createElement('span');
-      chip.className = 'node-chip';
+      chip.className = 'bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-[11px] font-mono cursor-pointer hover:border-blue-400';
       chip.textContent = node.nodeType ? `${node.nodeId} (${node.nodeType}/${node.plotId})` : node.nodeId;
       chip.title = 'Click to target this node in the command form below';
       chip.onclick = () => {
@@ -175,13 +206,13 @@ function ensureClientCard(id) {
   let card = clientCards.get(id);
   if (!card) {
     const el = document.createElement('div');
-    el.className = 'card';
+    el.className = 'card bg-slate-800 border border-slate-700 rounded-lg p-3';
     el.innerHTML = `
-      <div class="card-header">
-        <span class="card-title"></span>
+      <div class="card-header flex justify-between items-center mb-2 gap-2 flex-wrap">
+        <span class="card-title font-semibold text-sm"></span>
         <div class="card-actions"></div>
       </div>
-      <div class="log-panel"></div>
+      <div class="log-panel bg-slate-950 border border-slate-700 rounded-md p-2 h-[180px] min-h-[100px] max-h-[60vh] resize-y overflow-y-auto font-mono text-[11px] leading-relaxed"></div>
     `;
     clientListEl.appendChild(el);
     card = {
@@ -201,19 +232,19 @@ function renderClients(list) {
     seen.add(client.id);
     const card = ensureClientCard(client.id);
     card.titleEl.innerHTML = `${client.nodeId}
-      <span class="badge status-${client.status}">${client.status}</span>
-      <br><small>${client.nodeType} / ${client.plotId} &rarr; ${client.targetHost}:${client.targetPort}${client.hasToken ? ' (token)' : ''}</small>`;
+      <span class="${BADGE_BASE} ${STATUS_BADGE[client.status]}">${client.status}</span>
+      <br><small class="text-slate-400">${client.nodeType} / ${client.plotId} &rarr; ${client.targetHost}:${client.targetPort}${client.hasToken ? ' (token)' : ''}</small>`;
 
     card.actionsEl.innerHTML = '';
     if (client.status === 'running' || client.status === 'starting') {
       const stopBtn = document.createElement('button');
-      stopBtn.className = 'stop';
+      stopBtn.className = `${BTN_BASE} ${BTN_VARIANT.stop}`;
       stopBtn.textContent = 'Stop';
       stopBtn.title = 'Graceful: sends a SHUTDOWN COMMAND via its server (sends UNREGISTER, exits on its own)';
       stopBtn.onclick = () => socket.emit('client:stop', { id: client.id });
 
       const killBtn = document.createElement('button');
-      killBtn.className = 'kill';
+      killBtn.className = `${BTN_BASE} ${BTN_VARIANT.kill}`;
       killBtn.textContent = 'Kill';
       killBtn.title = 'Ungraceful: SIGKILL — demos the server-side ECONNRESET cleanup, not client-side reconnect';
       killBtn.onclick = () => socket.emit('client:kill', { id: client.id });
@@ -221,12 +252,13 @@ function renderClients(list) {
       card.actionsEl.append(stopBtn, killBtn);
     } else {
       const startBtn = document.createElement('button');
-      startBtn.className = 'start';
+      startBtn.className = `${BTN_BASE} ${BTN_VARIANT.start}`;
       startBtn.textContent = 'Start';
       startBtn.title = 'Respawn with the same node/target settings';
       startBtn.onclick = () => socket.emit('client:start', { id: client.id });
 
       const removeBtn = document.createElement('button');
+      removeBtn.className = BTN_BASE;
       removeBtn.textContent = 'Remove';
       removeBtn.onclick = () => socket.emit('client:remove', { id: client.id });
 

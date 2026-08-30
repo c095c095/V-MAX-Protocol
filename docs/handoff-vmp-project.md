@@ -155,4 +155,5 @@ live" above — `client.ts` now sends it every 3rd `PUSH`, so this dashboard not
 
 ## Files
 
-`docs/CONTEXT.md`, `docs/adr/0001..0012`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `dashboard/server.ts` + `dashboard/public/{index.html,style.css,app.js}` (demo tool, not graded), `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.
+`docs/CONTEXT.md`, `docs/adr/0001..0012`, `src/protocol/{types,codec}.ts`, `src/server/{index,connectionTable,auth,handlers,repl}.ts`, `src/client/{index,connection,commands,sensors}.ts`, `tests/{protocol,integration}.test.ts`, `dashboard/server.ts` + `dashboard/public/{index.html,app.js}` (demo tool, not graded — styled with
+Tailwind Play CDN, no separate stylesheet), `package.json` (+ lockfile), `tsconfig.json`, `.gitignore`. Run `npm install` after extracting, then `npm test` to confirm the environment checks out before continuing.
