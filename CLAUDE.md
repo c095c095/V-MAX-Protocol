@@ -142,10 +142,13 @@ alongside `buildCommandPayload`.
 
 **The "Demo tips / coverage notes" `<details>` block** (`dashboard/public/index.html`, right under the
 header) is load-bearing disclosure, not clutter — a `/scrutinize` pass found the dashboard silently implies
-full protocol coverage when `Seq` gap detection (ADR 0006) and version validation (ADR 0009) have no path
-through it at all (both need hand-crafted wire bytes no spawned client ever sends), and that auto-reconnect
-(ADR 0007) is demoable but only if you already know the non-obvious sequence (kill a server, not the client,
-then create a new one on the same port). Don't remove this block without keeping that disclosure somewhere.
+full protocol coverage when three things have no path through it at all: `Seq` gap detection (ADR 0006) and
+version validation (ADR 0009) need hand-crafted wire bytes no spawned client ever sends, and the `STATUS`
+method is never sent by `client.ts` in any form (CLI or dashboard) — a pre-existing client limitation, not
+something the dashboard introduced. Auto-reconnect (ADR 0007) *is* demoable, but only if you already know the
+non-obvious sequence (kill a server, not the client, then create a new one on the same port). Don't remove
+this block without keeping that disclosure somewhere — the dashboard does not cover 100% of the protocol and
+should never silently imply it does.
 
 Not wired into `pretest`/`npm test` (separate `tsc --noEmit` scope from `src/` on purpose) and not one of the
 assignment's three deliverables — useful for the demo video, nothing more.

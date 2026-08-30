@@ -107,6 +107,17 @@ panel's command form with the args field left empty produced `Unknown or malform
 placeholder + `required`), so an incomplete submit is blocked client-side instead of round-tripping to a
 confusing server error.
 
+A follow-up `/scrutinize` (prompted by "ตัว dashboard ครอบคลุมทุกอย่างของ protocol หรือยัง") found the
+dashboard never disclosed what it *can't* demo. Fixed with UI copy only (a "Demo tips / coverage notes"
+`<details>` block under the header, plus `.log-panel` made resizable — `resize: vertical`, per a separate
+request in the same session): **the dashboard does not, and structurally cannot, cover the full protocol.**
+Three things have zero path through it: `Seq` gap detection (ADR 0006) and version validation (ADR 0009) need
+hand-crafted wire bytes no spawned client ever sends, and the `STATUS` method is never sent by `client.ts` at
+all — a pre-existing limitation of the graded client code, not something the dashboard introduced or could
+fix without touching `src/`. Auto-reconnect (ADR 0007) *is* demoable, but the sequence (kill a server, not the
+client, then create a new one on the same port) wasn't explained anywhere — now it is, in that same block. If
+asked again "does it cover everything now," the honest answer is still no — only more honest about it.
+
 ## Remaining work, in order of the assignment's 3 requirements
 
 1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly
