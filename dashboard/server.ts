@@ -27,6 +27,11 @@ interface ServerInstance {
   log: string[];
   status: ProcessStatus;
   registeredNodes: Map<string, { nodeType: string; plotId: string }>;
+  // Metadata parsed from a REGISTER *request* line, which is logged before the server decides
+  // to accept or reject it — NOT proof of membership. Only promoted into `registeredNodes` once
+  // the authoritative "registered nodes: [...]" line confirms the id is actually present, so a
+  // rejected REGISTER (400/403/409) never shows up as a connected node in the UI.
+  pendingMetadata: Map<string, { nodeType: string; plotId: string }>;
 }
 
 interface ClientInstance {
@@ -99,12 +104,17 @@ const REMOVED_NODE_RE = /connection closed, removed node '([^']+)'/;
 function handleServerLogLine(instance: ServerInstance, line: string) {
   const listMatch = line.match(REGISTERED_LIST_RE);
   if (listMatch) {
+    // The only authoritative source of truth for "who is actually registered" — printed by
+    // the real server only after a REGISTER succeeds or an UNREGISTER completes.
     const ids = new Set(listMatch[1].split(',').map((s) => s.trim()).filter(Boolean));
     for (const knownId of [...instance.registeredNodes.keys()]) {
       if (!ids.has(knownId)) instance.registeredNodes.delete(knownId);
     }
     for (const id of ids) {
-      if (!instance.registeredNodes.has(id)) instance.registeredNodes.set(id, { nodeType: '', plotId: '' });
+      if (!instance.registeredNodes.has(id)) {
+        const meta = instance.pendingMetadata.get(id) ?? { nodeType: '', plotId: '' };
+        instance.registeredNodes.set(id, meta);
+      }
     }
     broadcastServerList();
     return;
@@ -112,17 +122,19 @@ function handleServerLogLine(instance: ServerInstance, line: string) {
 
   const registerMatch = line.match(REGISTER_HEADERS_RE);
   if (registerMatch) {
+    // This line is logged for every REGISTER *attempt*, before the server decides to accept
+    // or reject it — cache it as a candidate only, don't treat it as membership.
     try {
       const headers = JSON.parse(registerMatch[1]);
       if (headers['Node-ID']) {
-        instance.registeredNodes.set(headers['Node-ID'], {
+        instance.pendingMetadata.set(headers['Node-ID'], {
           nodeType: headers['Node-Type'] ?? '',
           plotId: headers['Plot-ID'] ?? '',
         });
-        broadcastServerList();
       }
     } catch {
-      /* malformed/partial line — ignore */
+      /* malformed/partial line (or a `}` inside a header value truncated the match) — the
+         REGISTERED_LIST_RE branch above already falls back to blank metadata for this id. */
     }
     return;
   }
@@ -175,14 +187,21 @@ function spawnServerProcess(instance: ServerInstance) {
   instance.child = child;
   instance.status = 'starting';
   instance.registeredNodes.clear(); // a fresh process has no registrations yet
+  instance.pendingMetadata.clear();
 
   attachLogging(child, 'server', instance.id, instance.log, (line) => handleServerLogLine(instance, line));
   child.on('spawn', () => {
     instance.status = 'running';
     broadcastServerList();
   });
-  child.on('exit', () => {
-    instance.status = 'stopped';
+  child.on('exit', (code, signal) => {
+    // SIGKILL only ever comes from our own Kill/fallback-kill — anything else non-zero is a
+    // real crash (uncaught exception, etc.), worth surfacing as distinct from an intended stop.
+    const expected = code === 0 || signal === 'SIGKILL';
+    instance.status = expected ? 'stopped' : 'error';
+    if (!expected) {
+      appendLog('server', instance.id, instance.log, `[dashboard] process exited unexpectedly (code=${code}, signal=${signal})`);
+    }
     broadcastServerList();
   });
   child.on('error', (err) => {
@@ -201,6 +220,7 @@ function createServerInstance(port: number, secret?: string): ServerInstance {
     log: [],
     status: 'starting',
     registeredNodes: new Map(),
+    pendingMetadata: new Map(),
   };
   servers.set(instance.id, instance);
   spawnServerProcess(instance);
@@ -228,8 +248,14 @@ function spawnClientProcess(instance: ClientInstance) {
     instance.status = 'running';
     broadcastClientList();
   });
-  child.on('exit', () => {
-    instance.status = 'stopped';
+  child.on('exit', (code, signal) => {
+    // A clean UNREGISTER-then-exit (from Stop/SHUTDOWN) exits with code 0; SIGKILL only ever
+    // comes from Kill or Stop's own fallback. Anything else is a real crash.
+    const expected = code === 0 || signal === 'SIGKILL';
+    instance.status = expected ? 'stopped' : 'error';
+    if (!expected) {
+      appendLog('client', instance.id, instance.log, `[dashboard] process exited unexpectedly (code=${code}, signal=${signal})`);
+    }
     broadcastClientList();
   });
   child.on('error', (err) => {

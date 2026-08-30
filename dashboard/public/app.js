@@ -43,6 +43,28 @@ function appendLogLine(container, line) {
   if (nearBottom) container.scrollTop = container.scrollHeight;
 }
 
+// COMMAND args, per subtype — mirrors server/repl.ts's buildCommandPayload exactly (which args
+// are required, in what order, space-separated). REPORT_NOW/SHUTDOWN take none; sending SET_
+// THRESHOLD or CALIBRATE with an empty args field silently gets rejected server-side as
+// "Unknown or malformed COMMAND" with no explanation, so the UI enforces it before that happens.
+const SUBTYPE_ARGS = {
+  SET_INTERVAL: { placeholder: 'seconds, e.g. 10', required: true },
+  REPORT_NOW: { placeholder: '(no args needed)', required: false },
+  SET_THRESHOLD: { placeholder: 'field min, e.g. temperature 20', required: true },
+  CALIBRATE: { placeholder: 'offset, e.g. 2', required: true },
+  SHUTDOWN: { placeholder: '(no args needed)', required: false },
+};
+
+function applySubtypeArgHints(form) {
+  const subtypeEl = form.elements.subtype;
+  const argsEl = form.elements.args;
+  const spec = SUBTYPE_ARGS[subtypeEl.value] ?? { placeholder: '', required: false };
+  argsEl.placeholder = spec.placeholder;
+  argsEl.required = spec.required;
+  argsEl.disabled = !spec.required && spec.placeholder === '(no args needed)';
+  if (argsEl.disabled) argsEl.value = '';
+}
+
 // ---- server cards ----
 function ensureServerCard(id) {
   let card = serverCards.get(id);
@@ -78,6 +100,9 @@ function ensureServerCard(id) {
       logEl: el.querySelector('.log-panel'),
       formEl: el.querySelector('.command-form'),
     };
+    card.formEl.elements.subtype.addEventListener('change', () => applySubtypeArgHints(card.formEl));
+    applySubtypeArgHints(card.formEl); // set the initial hint for the default-selected subtype
+
     card.formEl.addEventListener('submit', (e) => {
       e.preventDefault();
       const fd = new FormData(card.formEl);
