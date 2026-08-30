@@ -27,6 +27,18 @@ Don't re-derive protocol rationale; it's already recorded:
 - `docs/adr/0004-content-length-framing.md` — why `Content-Length` framing, not newline-delimited JSON.
 - `docs/adr/0005-nodejs-typescript-runtime.md` — why Node.js+TypeScript over Bun (grading/demo environment
   reliability, despite Bun matching the user's usual stack).
+- `docs/adr/0006-sequence-numbers-for-gap-detection.md` — `Seq` header for detecting message gaps/duplicates
+  across a reconnect. **Designed, not yet implemented** — see status line at the top of the file.
+- `docs/adr/0007-client-auto-reconnect.md` — client-side auto-reconnect with exponential backoff on an
+  unintentional disconnect. **Designed, not yet implemented.**
+- `docs/adr/0008-auth-token-authentication.md` — optional shared-secret `Auth-Token` header on REGISTER, and
+  why TLS was considered but deferred instead. **Designed, not yet implemented.**
+- `docs/adr/0009-protocol-version-validation.md` — why the already-present `VMP/1.0` version token now gets
+  validated instead of ignored. **Designed, not yet implemented.**
+- `docs/adr/0010-broadcast-command-to-plot.md` — operator REPL `command <Plot-ID> ...` to fan a COMMAND out to
+  every node in a plot. **Designed, not yet implemented.**
+- `docs/adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison table and the "จุดเด่น"
+  (strengths) summary built from ADRs 0006–0010.
 
 If a protocol detail changes, update `CONTEXT.md`/the relevant ADR in the same change — don't let docs drift
 from code.

@@ -34,8 +34,36 @@ Method ที่ node แจ้ง server ก่อนตัดการเช�
 ## VMP Status Codes
 
 **2xx**: `200 OK`, `201 Registered`
-**4xx**: `400 BadRequest`, `401 Unregistered`, `404 NodeNotFound`, `409 DuplicateNode`
+**4xx**: `400 BadRequest`, `401 Unregistered`, `403 Forbidden`, `404 NodeNotFound`, `409 DuplicateNode`
 **5xx**: `500 InternalError`
+
+> `403 Forbidden` และพฤติกรรมที่เกี่ยวข้องด้านล่าง (`Seq`, `Auth-Token`, version
+> validation, Plot-ID broadcast) ออกแบบไว้ใน `docs/adr/0006`–`0010` แต่**ยังไม่
+> implement** ใน `src/*.ts` ณ ตอนนี้ — ดูสถานะที่แน่นอนในแต่ละ ADR
+
+## VMP Headers เพิ่มเติม (ออกแบบไว้ใน ADR 0006–0010, ยังไม่ implement)
+
+**Seq**:
+Header จำนวนเต็มบน PUSH/COMMAND เริ่มที่ `1` และ reset ทุกครั้งที่ REGISTER สำเร็จ/
+เริ่ม connection ใหม่ — ให้ server ตรวจจับ gap (ข้อความหายช่วง disconnect) หรือ
+duplicate ได้ ไม่ใช่ full retransmission layer (`docs/adr/0006`)
+
+**Auth-Token**:
+Header ทางเลือกบน REGISTER สำหรับ shared-secret authentication — server เปิดใช้ผ่าน
+`--secret <token>` (CLI flag), client ส่งผ่าน `--token <token>` ถ้าไม่ตรงกับ token ที่
+server ตั้งไว้ ตอบกลับ `403 Forbidden` ถ้า server ไม่ได้ตั้ง `--secret` ไว้ ไม่มีการเช็คใดๆ
+(backward compatible) (`docs/adr/0008`)
+
+**Version validation**:
+Server ตรวจสอบว่า start line ของทุก request มี version ตรงกับ `VMP/1.0`
+(`VMP_VERSION` ใน `protocol.ts`) หรือไม่ ถ้าไม่ตรง ตอบกลับ `400 BadRequest`
+(`docs/adr/0009`)
+
+**Plot-ID เป็น COMMAND target ได้**:
+Operator REPL ฝั่ง server รองรับ `command <target> <SUBTYPE> [args]` โดย `<target>`
+เป็น Plot-ID ก็ได้ (เช่น `PLOT-01`) — server จะส่ง COMMAND เดียวกันไปยังทุก node ที่
+ลงทะเบียนอยู่ในแปลงนั้น (log แยกทีละ node) แทนที่จะจำกัดแค่ Node-ID เดี่ยว
+(`docs/adr/0010`)
 
 ## Naming Conventions
 

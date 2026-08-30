@@ -17,6 +17,8 @@ The previous session used `/grill-with-docs` (grilling + domain-modeling skills)
 - `docs/adr/0003-nodejs-event-driven-concurrency.md` — concurrency model (originally designed as Python thread-per-connection, revised mid-session when the language changed to Node.js — worth reading both the decision and *why it changed*, it's a useful example of catching a stale assumption).
 - `docs/adr/0004-content-length-framing.md` — why `Content-Length` framing, not newline-delimited.
 - `docs/adr/0005-nodejs-typescript-runtime.md` — why Node.js+TypeScript over Bun (environment reliability for grading/demo, despite Bun matching the user's usual stack).
+- `docs/adr/0006-sequence-numbers-for-gap-detection.md` through `docs/adr/0010-broadcast-command-to-plot.md` — 5 new protocol features (Seq gap detection, client auto-reconnect, Auth-Token auth, version validation, Plot-ID broadcast COMMAND), added via a follow-up `/grill-with-docs` session to give VMP genuine differentiators for the Networking course comparison writeup. **Designed and documented only — not yet implemented in `src/*.ts`.** See the next section.
+- `docs/adr/0011-comparison-with-existing-protocols.md` — VMP vs. MQTT/CoAP comparison (8-axis table + balanced trade-off discussion), with a closing "จุดเด่นของ VMP" summary built from ADRs 0006–0010, plus a "future work" section for four further ideas that were deliberately deferred (full session resumption, Message-ID dedupe, batch PUSH, TLS).
 
 ## Implementation state
 
@@ -41,9 +43,10 @@ To rerun the happy-path/error checks: start the server (`npx tsx src/server.ts <
 
 ## Remaining work, in order of the assignment's 3 requirements
 
-1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly assembly into report prose, plus message-sequence diagrams (e.g. REGISTER→201→PUSH×N→COMMAND→200, and each error case).
+1. **PDF protocol design doc** — not started. All raw content exists in `CONTEXT.md` + the ADRs; this is mostly assembly into report prose, plus message-sequence diagrams (e.g. REGISTER→201→PUSH×N→COMMAND→200, and each error case). Consider folding in ADR 0011's MQTT/CoAP comparison table and "จุดเด่นของ VMP" summary — it's written to be reused directly.
 2. **Source code** — implemented; needs the 5 untested scenarios above verified.
 3. **Video (≤15 min)** — not started. Plan was 5 demo cases: (1) happy path (2) multi-client concurrent (3) errors: 409/401/400 (4) ungraceful disconnect (5) STATUS→401 post-restart.
+4. **Implement ADRs 0006–0010** — the 5 new features (Seq gap detection, client auto-reconnect, Auth-Token auth, version validation, Plot-ID broadcast COMMAND) are fully spec'd but not yet in `src/*.ts`. Each ADR has an implementation-ready spec section. Doing this before the PDF/video gives the comparison writeup something real to point at instead of only designed-on-paper claims; doing it after is also fine if time is tight — just don't let the PDF claim behavior that isn't in the code.
 
 ## Suggested skills for next session
 
@@ -53,4 +56,4 @@ To rerun the happy-path/error checks: start the server (`npx tsx src/server.ts <
 
 ## Files
 
-Everything is in `vmp-project.zip`: `CONTEXT.md`, `docs/adr/0001..0005`, `src/{protocol,server,client}.ts`, `package.json` (+ lockfile), `tsconfig.json`. Run `npm install` after extracting, then `npx tsc --noEmit` to confirm the environment checks out before continuing.
+Everything is in `vmp-project.zip`: `CONTEXT.md`, `docs/adr/0001..0011`, `src/{protocol,server,client}.ts`, `package.json` (+ lockfile), `tsconfig.json`. Run `npm install` after extracting, then `npx tsc --noEmit` to confirm the environment checks out before continuing.
