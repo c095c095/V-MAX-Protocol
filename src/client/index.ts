@@ -104,6 +104,14 @@ connection.connect({
     if (state.pushTimer) clearInterval(state.pushTimer);
     process.exit(0);
   },
+  onDisconnect: () => {
+    // Stop pushing into a dead connection while a reconnect is pending — startPushing()
+    // creates a fresh timer once REGISTER succeeds again.
+    if (state.pushTimer) {
+      clearInterval(state.pushTimer);
+      state.pushTimer = null;
+    }
+  },
 });
 
 process.on('SIGINT', () => {

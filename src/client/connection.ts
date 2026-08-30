@@ -15,6 +15,9 @@ export interface ConnectOptions {
   onMessage: (msg: ParsedMessage) => void;
   /** Called only for an intentional disconnect (UNREGISTER already sent) — never on a drop. */
   onClose: () => void;
+  /** Called on an unexpected drop, before scheduling the reconnect — stop anything (like the
+   *  push loop) that assumes a live connection, so it doesn't keep "sending" into nothing. */
+  onDisconnect: () => void;
 }
 
 const BASE_BACKOFF_MS = 1000;
@@ -73,6 +76,7 @@ function openSocket() {
       opts.onClose();
       return;
     }
+    opts.onDisconnect();
     const delay = backoffMs;
     console.log(`Connection lost, reconnecting in ${delay / 1000}s...`);
     backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
